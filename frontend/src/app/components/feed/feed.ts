@@ -31,7 +31,8 @@ export class Feed implements OnInit {
 
   usuarioActual = computed(() => this.authService.currentUser());
   currentUserId = computed(() => this.authService.currentUserId());
-  esAdmin = computed(() => this.authService.currentUser()?.perfil === 'admin');
+  // En feed.ts
+  esAdmin = this.authService.isAdmin;
   menuUsuarioAbierto = signal<boolean>(false);
 
   avatarUsuarioActual = computed(() => {

@@ -41,8 +41,7 @@ export class PostCard implements OnInit {
 
   dioLike = computed(() => this.post().likes.includes(this.currentUserId()));
   esPropietario = computed(() => this.post().autor._id === this.currentUserId());
-  puedeEliminar = computed(() => this.esPropietario() || this.esAdmin());
-
+  puedeEliminar = computed(() => this.esAdmin() || this.currentUserId() === this.post().autor?._id);
   ngOnInit(): void {
     this.totalComentarios.set(this.post().commentsCount ?? 0);
 
@@ -58,6 +57,17 @@ export class PostCard implements OnInit {
 
   onDelete(): void {
     if (confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
+      this.deleted.emit(this.post()._id);
+    }
+  }
+
+  confirmarBaja(): void {
+    const esBajaDeAdmin = this.esAdmin() && this.post().autor?._id !== this.currentUserId();
+    const mensaje = esBajaDeAdmin
+      ? '¿Estás seguro de que querés dar de baja esta publicación como administrador? También dejarán de estar disponibles sus comentarios.'
+      : '¿Estás seguro de que querés eliminar tu publicación?';
+
+    if (confirm(mensaje)) {
       this.deleted.emit(this.post()._id);
     }
   }

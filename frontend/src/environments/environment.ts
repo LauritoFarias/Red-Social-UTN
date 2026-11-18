@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://tu-backend-en-render-o-railway.com',
+  apiUrl: 'red-social-utn-tau.vercel.app',
 };

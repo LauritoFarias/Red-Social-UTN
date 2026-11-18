@@ -5,11 +5,6 @@ import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-
-
-
-
-
 export const TIEMPO_AVISO_MS = 60 * 1000; 
 export const TIEMPO_GRACIA_SEGUNDOS = 30; 
 
@@ -52,7 +47,8 @@ export class AuthService {
   currentUserId = computed(() => this.currentUser()?._id ?? '');
   isAuthenticated = computed(() => !!this.currentUser() && !!this.getToken());
 
-  
+  readonly isAdmin = computed(() => this.currentUser()?.perfil === 'administrador');
+
   mostrarModalExpiracion = signal<boolean>(false);
   segundosRestantes = signal<number>(TIEMPO_GRACIA_SEGUNDOS);
   refrescandoToken = signal<boolean>(false);
