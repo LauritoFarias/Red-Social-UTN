@@ -5,7 +5,10 @@ import {
   OnInit,
   computed,
   inject,
-  signal
+  input,
+  output,
+  signal,
+  viewChild
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -20,7 +23,6 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../services/auth';
 import { take } from 'rxjs';
-
 
 interface RegistroDraft {
   nombre: string;
@@ -116,6 +118,12 @@ export class Registro implements OnInit, OnDestroy {
   private router = inject(Router);
   private hostElement = inject(ElementRef<HTMLElement>);
 
+  private fileInput = viewChild<ElementRef<HTMLInputElement>>('profileImageInput');
+
+  modoAdmin = input<boolean>(false);
+  usuarioCreado = output<void>();
+  cancelar = output<void>();
+
   registroForm = this.fb.group({
     nombre: [
       '',
@@ -177,7 +185,8 @@ export class Registro implements OnInit, OnDestroy {
         Validators.required,
         Validators.maxLength(350)
       ]
-    ]
+    ],
+    perfil: ['usuario']
   }, {
     validators: passwordMatchValidator
   });
@@ -222,7 +231,6 @@ export class Registro implements OnInit, OnDestroy {
   today = this.getTodayString();
 
   constructor() {
-    
     this.registroForm.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
@@ -231,8 +239,7 @@ export class Registro implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    
-    if (registroDraftCache) {
+    if (!this.modoAdmin() && registroDraftCache) {
       this.selectedDay.set(registroDraftCache.selectedDay);
       this.selectedMonth.set(registroDraftCache.selectedMonth);
       this.selectedYear.set(registroDraftCache.selectedYear);
@@ -263,6 +270,8 @@ export class Registro implements OnInit, OnDestroy {
   }
 
   private guardarBorradorEnMemoria(): void {
+    if (this.modoAdmin()) return;
+
     const raw = this.registroForm.getRawValue();
     registroDraftCache = {
       nombre: raw.nombre ?? '',
@@ -382,16 +391,45 @@ export class Registro implements OnInit, OnDestroy {
     formData.append('password', rawValues.password ?? '');
     formData.append('fechaNacimiento', rawValues.birthDate ?? '');
     formData.append('descripcion', rawValues.description ?? '');
-    formData.append('perfil', 'usuario');
+
+    const perfilElegido = this.modoAdmin()
+      ? (rawValues.perfil ?? 'usuario')
+      : 'usuario';
+    formData.append('perfil', perfilElegido);
 
     if (rawValues.profileImage) {
       formData.append('imagen', rawValues.profileImage);
     }
 
-    this.authService.registrar(formData).pipe(take(1)).subscribe({
+    const registro$ = this.modoAdmin()
+      ? this.authService.registrarComoAdmin(formData)
+      : this.authService.registrar(formData);
+
+    registro$.pipe(take(1)).subscribe({
       next: () => {
         this.isSubmitting.set(false);
-        registroDraftCache = null; 
+
+        if (this.modoAdmin()) {
+          const prevUrl = this.imagePreview();
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
+
+          const nativeFileInput = this.fileInput()?.nativeElement;
+          if (nativeFileInput) {
+            nativeFileInput.value = '';
+          }
+
+          this.registroForm.reset({ perfil: 'usuario' });
+          this.selectedDay.set('');
+          this.selectedMonth.set('');
+          this.selectedYear.set('');
+          this.imagePreview.set(null);
+          this.usuarioCreado.emit();
+          return;
+        }
+
+        registroDraftCache = null;
         this.successMessage.set('¡Usuario registrado correctamente! Redirigiendo...');
 
         setTimeout(() => {
@@ -408,7 +446,7 @@ export class Registro implements OnInit, OnDestroy {
         } else {
           this.errorMessage.set('Ocurrió un error al registrar el usuario. Intentá nuevamente.');
         }
-        
+
         this.scrollToError('.alert-error');
       }
     });

@@ -1,0 +1,210 @@
+<div class="section-toolbar">
+  <div>
+    <h1>Estadísticas</h1>
+    <p class="section-subtitle">
+      Actividad de usuarios, publicaciones, comentarios e interacciones en Retro Vibes
+    </p>
+  </div>
+
+  <button
+    type="button"
+    class="btn-secondary btn-compact"
+    (click)="cargarTodasLasEstadisticas()">
+    ↻ Actualizar gráficos
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert-error">{{ error() }}</div>
+}
+
+<div class="charts-grid">
+
+  <!-- 1. Publicaciones por usuario -->
+  <article class="chart-card">
+    <header class="chart-card-header">
+      <div>
+        <h2>Publicaciones por usuario</h2>
+        <p class="chart-subtitle">Cantidad publicada por cada cuenta en el período</p>
+      </div>
+    </header>
+
+    <div class="date-filter-bar">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [ngModel]="pubDesde()"
+          (ngModelChange)="pubDesde.set($event)" />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input
+          type="date"
+          [ngModel]="pubHasta()"
+          (ngModelChange)="pubHasta.set($event)" />
+      </label>
+      <button
+        type="button"
+        class="btn-filter"
+        (click)="cargarPublicacionesPorUsuario()">
+        Aplicar
+      </button>
+    </div>
+
+    <div class="chart-canvas-wrapper">
+      <canvas #chartPubUsuario [class.is-hidden]="cargandoPubUsuario() || vacioPubUsuario()"></canvas>
+      @if (cargandoPubUsuario()) {
+        <div class="chart-overlay"><div class="retro-spinner sm"></div></div>
+      } @else if (vacioPubUsuario()) {
+        <div class="chart-overlay chart-empty">Sin publicaciones en el rango seleccionado.</div>
+      }
+    </div>
+  </article>
+
+  <!-- 2. Comentarios en un lapso de tiempo -->
+  <article class="chart-card">
+    <header class="chart-card-header">
+      <div>
+        <h2>Comentarios en el tiempo</h2>
+        <p class="chart-subtitle">Evolución diaria de comentarios realizados</p>
+      </div>
+      <span class="kpi-badge">Total: {{ totalComentarios() }}</span>
+    </header>
+
+    <div class="date-filter-bar">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [ngModel]="comDesde()"
+          (ngModelChange)="comDesde.set($event)" />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input
+          type="date"
+          [ngModel]="comHasta()"
+          (ngModelChange)="comHasta.set($event)" />
+      </label>
+      <button
+        type="button"
+        class="btn-filter"
+        (click)="cargarComentariosPorTiempo()">
+        Aplicar
+      </button>
+    </div>
+
+    <div class="chart-canvas-wrapper">
+      <canvas #chartComTiempo [class.is-hidden]="cargandoComTiempo() || vacioComTiempo()"></canvas>
+      @if (cargandoComTiempo()) {
+        <div class="chart-overlay"><div class="retro-spinner sm"></div></div>
+      } @else if (vacioComTiempo()) {
+        <div class="chart-overlay chart-empty">Sin comentarios en el rango seleccionado.</div>
+      }
+    </div>
+  </article>
+
+  <!-- 3. Comentarios por publicación -->
+  <article class="chart-card">
+    <header class="chart-card-header">
+      <div>
+        <h2>Comentarios por publicación</h2>
+        <p class="chart-subtitle">Publicaciones con mayor conversación en el período</p>
+      </div>
+    </header>
+
+    <div class="date-filter-bar">
+      <label class="date-field">
+        <span>Desde</span>
+        <input
+          type="date"
+          [ngModel]="comPostDesde()"
+          (ngModelChange)="comPostDesde.set($event)" />
+      </label>
+      <label class="date-field">
+        <span>Hasta</span>
+        <input
+          type="date"
+          [ngModel]="comPostHasta()"
+          (ngModelChange)="comPostHasta.set($event)" />
+      </label>
+      <button
+        type="button"
+        class="btn-filter"
+        (click)="cargarComentariosPorPublicacion()">
+        Aplicar
+      </button>
+    </div>
+
+    <div class="chart-canvas-wrapper">
+      <canvas #chartComPost [class.is-hidden]="cargandoComPost() || vacioComPost()"></canvas>
+      @if (cargandoComPost()) {
+        <div class="chart-overlay"><div class="retro-spinner sm"></div></div>
+      } @else if (vacioComPost()) {
+        <div class="chart-overlay chart-empty">Sin comentarios en publicaciones para este rango.</div>
+      }
+    </div>
+  </article>
+
+  <!-- 4. Ingresos (log in) por usuario -->
+  <article class="chart-card">
+    <header class="chart-card-header">
+      <div>
+        <h2>Ingresos (Log in) por usuario</h2>
+        <p class="chart-subtitle">Cantidad acumulada de inicios de sesión por cuenta</p>
+      </div>
+    </header>
+
+    <div class="chart-canvas-wrapper">
+      <canvas #chartIngresos [class.is-hidden]="cargandoIngresos() || vacioIngresos()"></canvas>
+      @if (cargandoIngresos()) {
+        <div class="chart-overlay"><div class="retro-spinner sm"></div></div>
+      } @else if (vacioIngresos()) {
+        <div class="chart-overlay chart-empty">Todavía no hay ingresos registrados.</div>
+      }
+    </div>
+  </article>
+
+  <!-- 5. Visitas a mi perfil (por terceros) -->
+  <article class="chart-card">
+    <header class="chart-card-header">
+      <div>
+        <h2>Visitas a mi perfil</h2>
+        <p class="chart-subtitle">Visitas recibidas de otros usuarios (excluye visitas propias)</p>
+      </div>
+      <span class="kpi-badge">Total: {{ totalVisitasPerfil() }}</span>
+    </header>
+
+    <div class="chart-canvas-wrapper">
+      <canvas #chartVisitas [class.is-hidden]="cargandoVisitas() || vacioVisitas()"></canvas>
+      @if (cargandoVisitas()) {
+        <div class="chart-overlay"><div class="retro-spinner sm"></div></div>
+      } @else if (vacioVisitas()) {
+        <div class="chart-overlay chart-empty">
+          Aún no se registraron visitas de otros usuarios a tu perfil.
+        </div>
+      }
+    </div>
+  </article>
+
+  <!-- 6. Me gusta otorgados por día -->
+  <article class="chart-card">
+    <header class="chart-card-header">
+      <div>
+        <h2>Me gusta otorgados por día</h2>
+        <p class="chart-subtitle">Cantidad diaria de "Me gusta" registrados en la plataforma</p>
+      </div>
+    </header>
+
+    <div class="chart-canvas-wrapper">
+      <canvas #chartLikes [class.is-hidden]="cargandoLikes() || vacioLikes()"></canvas>
+      @if (cargandoLikes()) {
+        <div class="chart-overlay"><div class="retro-spinner sm"></div></div>
+      } @else if (vacioLikes()) {
+        <div class="chart-overlay chart-empty">Todavía no hay "Me gusta" registrados por día.</div>
+      }
+    </div>
+  </article>
+
+</div>

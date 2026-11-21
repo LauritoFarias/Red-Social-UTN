@@ -37,10 +37,19 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales incorrectas.');
     }
 
+    await this.usuarioModel.updateOne(
+      { _id: user._id },
+      { $inc: { loginCount: 1 } },
+    );
+
     return this.generateToken(user);
   }
 
-  async registrar(createUsuarioDto: CreateUsuarioDto, file: Express.Multer.File) {
+  async registrar(
+    createUsuarioDto: CreateUsuarioDto,
+    file: Express.Multer.File,
+    authHeader?: string,
+  ) {
     const existe = await this.usuarioModel.findOne({
       $or: [
         { correo: createUsuarioDto.correo.toLowerCase() },
@@ -52,14 +61,30 @@ export class AuthService {
       throw new ConflictException('El correo o nombre de usuario ya está registrado.');
     }
 
+    let perfilAsignado: 'usuario' | 'administrador' = 'usuario';
+
+    if (createUsuarioDto.perfil === 'administrador' && authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      try {
+        const payload = await this.jwtService.verifyAsync(token);
+        const solicitante = await this.usuarioModel.findById(payload.sub).select('perfil activo');
+        if (solicitante && solicitante.activo !== false && solicitante.perfil === 'administrador') {
+          perfilAsignado = 'administrador';
+        }
+      } catch {
+        perfilAsignado = 'usuario';
+      }
+    }
+
     const imagenUrl = await this.fileService.cloudinaryUploader(file);
     const hashedPassword = await bcrypt.hash(createUsuarioDto.password, 10);
 
     const newUser = await this.usuarioModel.create({
       ...createUsuarioDto,
+      correo: createUsuarioDto.correo.toLowerCase(),
       password: hashedPassword,
       imagenUrl,
-      perfil: 'usuario',
+      perfil: perfilAsignado,
     });
 
     return this.generateToken(newUser);
@@ -99,7 +124,7 @@ export class AuthService {
       maxAge: 1000 * 60 * 15,
     });
   }
-  
+
   async refreshToken(userId: string) {
     const user = await this.usuarioModel.findById(userId);
     if (!user) {
@@ -125,7 +150,6 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado.');
     }
 
-    
     if (datos.username && datos.username.trim() !== user.username) {
       const usernameLimpio = datos.username.trim();
       const existeUsername = await this.usuarioModel.findOne({

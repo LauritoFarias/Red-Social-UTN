@@ -12,7 +12,7 @@
           @if (post().autor.nombre) {
             <span class="nombre">{{ post().autor.nombre }} {{ post().autor.apellido }}</span>
           }
-          <span class="username">&#64;{{ post().autor.username }}</span>
+          <span class="username">{{ post().autor.username }}</span>
         </div>
 
         <!-- Fecha como enlace subrayable estilo Facebook -->
@@ -21,7 +21,7 @@
           class="fecha-link"
           title="Ver publicación completa">
           <time [attr.datetime]="post().createdAt">
-            {{ post().createdAt | date:'dd/MM/yyyy HH:mm' }}
+            {{ post().createdAt | fechaHora }}
           </time>
         </a>
       </div>
@@ -34,7 +34,7 @@
           class="btn-delete-post"
           (click)="confirmarBaja()"
           title="Dar de baja publicación">
-          🗑️ {{ esAdmin() && post().autor?._id !== currentUserId() ? 'Dar de baja (Admin)' : 'Eliminar' }}
+          🗑️ {{ esAdmin() && post().autor._id !== currentUserId() ? 'Dar de baja (Admin)' : 'Eliminar' }}
         </button>
       }
     </div>
@@ -118,13 +118,13 @@
             <div class="comment-content">
               <div class="comment-header">
                 <div class="comment-author-meta">
-                  <span class="comment-username">&#64;{{ comentario.autor.username }}</span>
+                  <span class="comment-username">{{ comentario.autor.username }}</span>
                   <time class="comment-date">
-                    {{ comentario.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                    {{ comentario.createdAt | fechaHora }}
                   </time>
                   @if (comentario.editado) {
                     <span class="edited-badge" title="Este comentario fue modificado">
-                      • (editado)
+- (editado)
                     </span>
                   }
                 </div>

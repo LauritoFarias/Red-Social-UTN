@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { UsernameArrobaPipe } from '../../pipes/username-arroba-pipe';
 import {
   AbstractControl,
   FormBuilder,
@@ -61,7 +62,7 @@ const profileImageValidator: ValidatorFn = (
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, RouterLink, ReactiveFormsModule, PostCard],
+  imports: [DatePipe, RouterLink, ReactiveFormsModule, PostCard, UsernameArrobaPipe],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })

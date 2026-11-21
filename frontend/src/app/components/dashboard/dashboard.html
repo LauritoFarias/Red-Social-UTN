@@ -1,0 +1,67 @@
+<!-- HEADER STICKY COMPARTIDO DEL DASHBOARD -->
+<header class="app-header">
+  <div class="header-inner">
+    <a routerLink="/feed" class="brand-link">
+      <span class="brand-dot"></span>
+      <span class="brand-title">Retro Vibes · Dashboard</span>
+    </a>
+
+    <div class="header-actions">
+      <a routerLink="/feed" class="btn-new-post-sm">
+        ← Volver al Feed
+      </a>
+
+      <!-- Menú de Usuario -->
+      <div class="user-menu-wrapper">
+        <button
+          type="button"
+          class="avatar-trigger"
+          (click)="toggleMenuUsuario($event)"
+          aria-label="Menú de usuario">
+          <img
+            [src]="avatarUsuarioActual()"
+            [alt]="usuarioActual()?.username || 'Admin'"
+          />
+        </button>
+
+        @if (menuUsuarioAbierto()) {
+          <div class="user-dropdown" (click)="$event.stopPropagation()">
+            <div class="dropdown-user-info">
+              <strong>{{ usuarioActual()?.nombre }}</strong>
+              <span>{{ usuarioActual()?.username }}</span>
+            </div>
+            <hr />
+            <a routerLink="/perfil" class="dropdown-item" (click)="cerrarMenuUsuario()">
+              Ver perfil
+            </a>
+            <button type="button" class="dropdown-item dropdown-logout" (click)="cerrarSesion()">
+              Cerrar sesión
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- CONTENIDO PRINCIPAL CON TABS -->
+<main class="admin-page" (click)="cerrarMenuUsuario()">
+  <section class="admin-container">
+    <nav class="tabs-nav dashboard-tabs" aria-label="Secciones del Dashboard">
+      <a
+        routerLink="/dashboard/usuarios"
+        routerLinkActive="active"
+        class="tab-item">
+        Usuarios
+      </a>
+      <a
+        routerLink="/dashboard/estadisticas"
+        routerLinkActive="active"
+        class="tab-item">
+        Estadísticas
+      </a>
+    </nav>
+
+    <router-outlet />
+  </section>
+</main>

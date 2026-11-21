@@ -1,0 +1,136 @@
+@if (toastMensaje()) {
+  <div class="toast-success" role="status">
+    <span class="toast-icon">✓</span>
+    <span>{{ toastMensaje() }}</span>
+  </div>
+}
+
+<div class="section-toolbar">
+  <div>
+    <h1>Gestión de Usuarios</h1>
+    <p class="section-subtitle">
+      Listado de usuarios registrados, perfiles y control de acceso ({{ usuarios().length }} en total)
+    </p>
+  </div>
+
+  <button
+    type="button"
+    class="btn-primary btn-compact"
+    (click)="abrirModalCrearUsuario()">
+    + Nuevo usuario
+  </button>
+</div>
+
+@if (error()) {
+  <div class="alert-error">{{ error() }}</div>
+}
+
+@if (cargando()) {
+  <div class="status-box">
+    <div class="retro-spinner sm"></div>
+  </div>
+} @else {
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th class="col-avatar">Foto</th>
+          <th>Nombre</th>
+          <th>Apellido</th>
+          <th>Mail</th>
+          <th>Nombre de usuario</th>
+          <th>Fecha de nacimiento</th>
+          <th>Tipo de usuario</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of usuarios(); track u._id) {
+          <tr [class.row-disabled]="u.activo === false">
+            <td class="col-avatar">
+              <img
+                [src]="u.imagenUrl || 'https://ui-avatars.com/api/?name=' + u.username + '&background=334155&color=fff'"
+                [alt]="'Foto de ' + u.username"
+                width="36"
+                height="36"
+                class="table-avatar"
+              />
+            </td>
+            <td>{{ u.nombre }}</td>
+            <td>{{ u.apellido }}</td>
+            <td class="col-email">{{ u.correo }}</td>
+            <td class="col-username">
+              <span class="table-username">{{ u.username }}</span>
+            </td>
+            <td class="col-date">{{ u.fechaNacimiento | date:'dd/MM/yyyy':'UTC' }}</td>
+            <td>
+              <span
+                class="status-badge"
+                [class.badge-admin]="u.perfil === 'administrador'"
+                [class.badge-user]="u.perfil !== 'administrador'">
+                {{ u.perfil === 'administrador' ? 'Administrador' : 'Usuario' }}
+              </span>
+            </td>
+            <td>
+              <span
+                class="status-badge"
+                [class.badge-active]="u.activo !== false"
+                [class.badge-inactive]="u.activo === false">
+                {{ u.activo | estadoUsuario }}
+              </span>
+            </td>
+            <td class="col-actions">
+              @if (u._id === currentUserId()) {
+                <span class="self-label">Sesión actual</span>
+              } @else {
+                <button
+                  type="button"
+                  class="btn-status"
+                  [class.btn-disable]="u.activo !== false"
+                  [class.btn-enable]="u.activo === false"
+                  [disabled]="procesandoId() === u._id"
+                  (click)="toggleEstadoUsuario(u)">
+                  @if (procesandoId() === u._id) {
+                    Procesando...
+                  } @else {
+                    {{ u.activo !== false ? 'Deshabilitar' : 'Habilitar' }}
+                  }
+                </button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="empty-cell">No hay usuarios registrados en el sistema.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- MODAL QUE RECICLA EL COMPONENTE DE REGISTRO -->
+@if (modalRegistroAbierto()) {
+  <div class="modal-backdrop" (click)="cerrarModalCrearUsuario()">
+    <div class="modal-card modal-lg" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Crear nuevo usuario</h2>
+        <button
+          type="button"
+          class="btn-close-modal"
+          (click)="cerrarModalCrearUsuario()"
+          aria-label="Cerrar">
+          ✕
+        </button>
+      </div>
+
+      <div class="embedded-register-wrapper">
+        <app-registro
+          [modoAdmin]="true"
+          (usuarioCreado)="onUsuarioCreado()"
+        />
+      </div>
+    </div>
+  </div>
+}

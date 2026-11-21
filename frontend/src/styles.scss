@@ -154,7 +154,7 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
     font-family: 'Segoe UI', system-ui, sans-serif;
   }
 
-  input:not([type='file']),
+  input:not([type='file']):not([type='radio']):not([type='checkbox']),
   textarea,
   select {
     width: 100%;
@@ -210,6 +210,64 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
     font-size: 0.78rem;
     margin-top: 0.35rem;
     line-height: 1.35;
+  }
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem; // Separa cada opción entre sí
+  margin-top: 0.35rem;
+}
+
+.radio-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background-color: var(--bg-surface);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    border-color: var(--border-strong);
+    background-color: var(--bg-page);
+  }
+
+  &:has(input[type='radio']:checked) {
+    border-color: var(--brand-secondary);
+    background-color: var(--brand-secondary-soft);
+  }
+
+  input[type='radio'] {
+    width: 18px;
+    height: 18px;
+    margin: 0.15rem 0 0 0;
+    accent-color: var(--brand-secondary);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .radio-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem; // Separa el título del texto descriptivo de abajo
+    font-family: 'Segoe UI', system-ui, sans-serif;
+
+    .radio-title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.25;
+    }
+
+    .radio-description {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      line-height: 1.45; // Evita que el texto se vea apretado
+    }
   }
 }
 
@@ -970,4 +1028,116 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
 
 @keyframes globalSpin {
   to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+9. TABLAS DE DATOS Y BOTONES DE ESTADO
+   ========================================================================== */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 0.9rem;
+  background-color: var(--bg-surface);
+
+  thead {
+    background-color: var(--bg-subtle);
+
+    th {
+      padding: 0.85rem 1rem;
+      font-weight: 700;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--brand-secondary);
+      border: 1px solid var(--border-color);
+      text-align: center;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+  }
+
+  tbody {
+    tr {
+      transition: background-color 0.12s ease;
+
+      &:nth-child(even) {
+        background-color: #fafbfc;
+      }
+
+      &:hover {
+        background-color: var(--brand-secondary-soft);
+      }
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      text-align: center;
+      vertical-align: middle;
+    }
+  }
+}
+
+.table-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto; // Centra la foto dentro de la celda
+  border: 1.5px solid var(--border-strong);
+  background-color: var(--bg-subtle);
+}
+
+// Botones semánticos para Habilitar / Deshabilitar
+.btn-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &.btn-disable {
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+    border: 1.5px solid var(--color-error-border);
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-error);
+      border-color: var(--color-error);
+      color: #ffffff;
+    }
+  }
+
+  &.btn-enable {
+    background-color: var(--color-success-bg);
+    color: var(--color-success);
+    border: 1.5px solid var(--color-success-border);
+
+    &:hover:not(:disabled) {
+      background-color: var(--color-success);
+      border-color: var(--color-success);
+      color: #ffffff;
+    }
+  }
 }

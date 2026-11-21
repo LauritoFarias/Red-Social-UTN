@@ -113,11 +113,11 @@
               <div class="profile-field-row" (click)="abrirModalEditar('username')">
                 <div class="field-info">
                   <span class="field-label">Nombre de usuario</span>
-                  <strong class="field-value username-val">&#64;{{ user.username }}</strong>
+                  <strong class="field-value username-val">{{ user.username | usernameArroba }}</strong>
                 </div>
                 <span class="btn-edit-inline">Editar ✎</span>
               </div>
-
+              
               <!-- Fecha de nacimiento -->
               <div class="profile-field-row" (click)="abrirModalEditar('fechaNacimiento')">
                 <div class="field-info">

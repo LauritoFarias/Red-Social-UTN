@@ -12,8 +12,12 @@
 
       <header class="form-header">
         <img src="assets/images/logo.png" alt="Retro Vibes" class="form-brand-logo" />
-        <h2>Crear una cuenta</h2>
-        <p>Unite a la comunidad Retro Vibes.</p>
+        <h2>{{ modoAdmin() ? 'Registrar nuevo usuario' : 'Crear una cuenta' }}</h2>
+        <p>
+          {{ modoAdmin()
+            ? 'Completá los datos para dar de alta una cuenta desde el panel.'
+            : 'Unite a la comunidad Retro Vibes.' }}
+        </p>
       </header>
 
       @if (errorMessage()) {
@@ -278,26 +282,63 @@
           }
         </div>
 
+        @if (modoAdmin()) {
+          <div class="form-group">
+            <label>Tipo de usuario (Perfil)</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  formControlName="perfil"
+                  value="usuario"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Usuario estándar</span>
+                  <span class="radio-description">
+                    Puede publicar contenido, comentar e interactuar con otros perfiles dentro de la red social.
+                  </span>
+                </div>
+              </label>
+
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  formControlName="perfil"
+                  value="administrador"
+                />
+                <div class="radio-content">
+                  <span class="radio-title">Administrador</span>
+                  <span class="radio-description">
+                    Tiene acceso completo al dashboard para gestionar cuentas, roles y estados de usuarios.
+                  </span>
+                </div>
+              </label>
+            </div>
+          </div>
+        }
+
         <button
           type="submit"
           class="btn-primary"
           [disabled]="isSubmitting()"
         >
           @if (isSubmitting()) {
-            <span>Creando cuenta...</span>
+            <span>{{ modoAdmin() ? 'Registrando...' : 'Creando cuenta...' }}</span>
           } @else {
-            <span>Registrarme</span>
+            <span>{{ modoAdmin() ? 'Registrar' : 'Registrarse' }}</span>
           }
         </button>
 
       </form>
 
-      <footer class="form-footer">
-        <p>¿Ya tenés una cuenta?</p>
-        <a routerLink="/login" class="btn-secondary">
-          Iniciar sesión
-        </a>
-      </footer>
+      @if (!modoAdmin()) {
+        <footer class="form-footer">
+          <p>¿Ya tenés una cuenta?</p>
+          <a routerLink="/login" class="btn-secondary">
+            Iniciar sesión
+          </a>
+        </footer>
+      }
 
     </div>
   </section>

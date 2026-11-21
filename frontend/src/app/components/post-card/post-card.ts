@@ -4,10 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CommentItem, PostItem } from '../../models/post.model';
 import { PostsService } from '../../services/posts';
+import { FechaHoraPipe } from '../../pipes/fecha-hora-pipe';
 
 @Component({
   selector: 'app-post-card',
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink, FechaHoraPipe],
   templateUrl: './post-card.html',
   styleUrl: './post-card.scss',
 })

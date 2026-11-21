@@ -9,6 +9,7 @@ import { FileService } from './file/file.service';
 import { AuthModule } from './auth/auth.module';
 import { PostsModule } from './posts/posts.module';
 import { CommentModule } from './comments/comments.module';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { CommentModule } from './comments/comments.module';
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'secret_fallback',
         signOptions: {
-          expiresIn: (configService.get<string>('JWT_EXPIRES_IN')) as any,
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN') as any,
         },
       }),
     }),
@@ -31,6 +32,7 @@ import { CommentModule } from './comments/comments.module';
     AuthModule,
     PostsModule,
     CommentModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService, FileService],

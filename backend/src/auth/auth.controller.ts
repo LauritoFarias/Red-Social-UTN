@@ -46,11 +46,12 @@ export class AuthController {
   async registrar(
     @Body() createUsuarioDto: CreateUsuarioDto,
     @UploadedFile() file: Express.Multer.File,
+    @Headers('authorization') authHeader?: string,
   ) {
     if (!file) {
       throw new BadRequestException('La imagen de perfil es obligatoria.');
     }
-    return this.authService.registrar(createUsuarioDto, file);
+    return this.authService.registrar(createUsuarioDto, file, authHeader);
   }
 
   @Post('login')

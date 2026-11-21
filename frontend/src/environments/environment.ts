@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'red-social-utn-tau.vercel.app',
+  apiUrl: 'http://localhost:3000',
 };

@@ -5,8 +5,8 @@ import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export const TIEMPO_AVISO_MS = 60 * 1000; 
-export const TIEMPO_GRACIA_SEGUNDOS = 30; 
+export const TIEMPO_AVISO_MS = 60 * 1000;
+export const TIEMPO_GRACIA_SEGUNDOS = 30;
 
 export interface UsuarioSesion {
   _id: string;
@@ -19,6 +19,7 @@ export interface UsuarioSesion {
   descripcion: string;
   fechaNacimiento?: string;
   perfil: string;
+  activo?: boolean;
   createdAt?: string;
 }
 
@@ -53,21 +54,31 @@ export class AuthService {
   segundosRestantes = signal<number>(TIEMPO_GRACIA_SEGUNDOS);
   refrescandoToken = signal<boolean>(false);
 
-  
   registrar(formData: FormData): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/registro`, formData).pipe(
       tap((res) => this.guardarSesion(res)),
     );
   }
 
-  
+  /**
+   * Creación de usuarios desde el Dashboard de Administrador:
+   * Envía el token del admin actual y NO sobrescribe la sesión activa.
+   */
+  registrarComoAdmin(formData: FormData): Observable<LoginResponse> {
+    const token = this.getToken();
+    const headers = token
+      ? new HttpHeaders().set('Authorization', `Bearer ${token}`)
+      : new HttpHeaders();
+
+    return this.http.post<LoginResponse>(`${this.apiUrl}/registro`, formData, { headers });
+  }
+
   login(credenciales: { identificador: string; password: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credenciales).pipe(
       tap((res) => this.guardarSesion(res)),
     );
   }
 
-  
   extenderSesion(): void {
     if (!this.isBrowser || this.refrescandoToken()) return;
 
@@ -83,7 +94,7 @@ export class AuthService {
     this.http.post<LoginResponse>(`${this.apiUrl}/refresh`, {}, { headers }).subscribe({
       next: (res) => {
         this.refrescandoToken.set(false);
-        this.guardarSesion(res); 
+        this.guardarSesion(res);
       },
       error: () => {
         this.refrescandoToken.set(false);
@@ -121,15 +132,19 @@ export class AuthService {
       .pipe(
         tap((res) => {
           if (res.usuario) {
+            if (res.usuario.activo === false) {
+              this.limpiarSesion();
+              return;
+            }
             this.currentUser.set(res.usuario);
             localStorage.setItem('usuario', JSON.stringify(res.usuario));
-            
+
             if (!this.warningTimeoutId && !this.mostrarModalExpiracion()) {
               this.iniciarTemporizadorSesion();
             }
           }
         }),
-        map((res) => res.valido),
+        map((res) => res.valido && res.usuario?.activo !== false),
         catchError(() => {
           this.limpiarSesion();
           return of(false);
@@ -137,22 +152,35 @@ export class AuthService {
       );
   }
 
-  
+  /**
+   * Usado por adminGuard: aprovecha verificarSesion() para validar token + rol administrador
+   * incluso si se recarga la página (F5) estando en /dashboard.
+   */
+  verificarPerfilAdmin(): Observable<boolean> {
+    if (!this.isBrowser) {
+      return of(true);
+    }
+
+    if (this.isAdmin() && this.currentUser()?.activo !== false && !!this.getToken()) {
+      return of(true);
+    }
+
+    return this.verificarSesion().pipe(
+      map((sesionValida) => sesionValida && this.isAdmin()),
+    );
+  }
 
   iniciarTemporizadorSesion(): void {
     if (!this.isBrowser) return;
     this.detenerTemporizadores();
 
-    
     this.warningTimeoutId = setTimeout(() => {
       this.segundosRestantes.set(TIEMPO_GRACIA_SEGUNDOS);
       this.mostrarModalExpiracion.set(true);
 
-      
       this.countdownIntervalId = setInterval(() => {
         const actual = this.segundosRestantes() - 1;
         if (actual <= 0) {
-          
           this.logout();
         } else {
           this.segundosRestantes.set(actual);

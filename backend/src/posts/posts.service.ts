@@ -1,16 +1,20 @@
-
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Post } from './entities/post.entity';
 import { Comment } from '../comments/entities/comment.entity';
 import { CreatePostDto } from './dto/create-post.dto';
+import {
+  LikeEvent,
+  LikeEventDocument,
+} from '../statistics/entities/like-event.entity';
 
 @Injectable()
 export class PostsService {
   constructor(
     @InjectModel(Post.name) private postModel: Model<Post>,
     @InjectModel(Comment.name) private commentModel: Model<Comment>,
+    @InjectModel(LikeEvent.name) private likeEventModel: Model<LikeEventDocument>,
   ) {}
 
   async create(dto: CreatePostDto, userId: string, imagenUrl?: string) {
@@ -73,12 +77,25 @@ export class PostsService {
     const post = await this.postModel.findOne({ _id: postId, activo: true });
     if (!post) throw new NotFoundException('Publicación no encontrada');
 
+    const postObjectId = new Types.ObjectId(postId);
     const userObjectId = new Types.ObjectId(userId);
     const hasLiked = post.likes.some((id) => id.equals(userObjectId));
 
     const update = hasLiked
       ? { $pull: { likes: userObjectId }, $inc: { likesCount: -1 } }
       : { $addToSet: { likes: userObjectId }, $inc: { likesCount: 1 } };
+
+    if (hasLiked) {
+      await this.likeEventModel.deleteOne({
+        postId: postObjectId,
+        usuarioId: userObjectId,
+      });
+    } else {
+      await this.likeEventModel.create({
+        postId: postObjectId,
+        usuarioId: userObjectId,
+      });
+    }
 
     return this.postModel
       .findByIdAndUpdate(postId, update, { new: true })
@@ -99,8 +116,6 @@ export class PostsService {
     return { deleted: true, postId };
   }
 
-  
-
   async getComments(postId: string, page = 1, limit = 10) {
     const skip = (page - 1) * limit;
     const filter = { postId: new Types.ObjectId(postId), activo: true };
@@ -108,7 +123,7 @@ export class PostsService {
     const [data, total] = await Promise.all([
       this.commentModel
         .find(filter)
-        .sort({ createdAt: -1 }) 
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('autor', 'username nombre apellido imagenUrl fotoPerfil')
@@ -168,7 +183,6 @@ export class PostsService {
 
     const objectId = new Types.ObjectId(cleanId);
 
-    
     const post = await this.postModel
       .findOne({
         $or: [{ _id: objectId }, { _id: cleanId as any }],

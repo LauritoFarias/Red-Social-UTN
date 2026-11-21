@@ -1,0 +1,19 @@
+.admin-page {
+  padding: 2rem 1.25rem 4rem;
+}
+
+.admin-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.dashboard-tabs {
+  margin-bottom: 1.75rem;
+
+  .tab-item {
+    text-decoration: none;
+  }
+}
