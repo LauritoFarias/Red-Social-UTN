@@ -31,6 +31,7 @@
             (click)="toggleMenuUsuario($event)"
             aria-label="Menú de usuario">
             <img
+              appAvatarHover
               [src]="avatarUsuarioActual()"
               [alt]="usuarioActual()?.username || 'Usuario'"
             />
@@ -63,6 +64,7 @@
       <!-- CAJA RÁPIDA PARA ABRIR EL MODAL DE CREAR PUBLICACIÓN -->
       <div class="create-post-prompt" (click)="abrirModalCrear()">
         <img
+          appAvatarHover
           class="prompt-avatar"
           [src]="avatarUsuarioActual()"
           alt="Tu foto"
@@ -123,29 +125,19 @@
           }
         </div>
 
-        <!-- PAGINACIÓN (10 EN 10) -->
-        @if (totalPages() > 1) {
-          <nav class="pagination" aria-label="Paginación de publicaciones">
-            <button
-              type="button"
-              class="page-btn"
-              [disabled]="currentPage() === 1"
-              (click)="cambiarPagina(currentPage() - 1)">
-              ← Anterior
-            </button>
-
-            <span class="page-indicator">
-              Página <strong>{{ currentPage() }}</strong> de <strong>{{ totalPages() }}</strong>
-            </span>
-
-            <button
-              type="button"
-              class="page-btn"
-              [disabled]="currentPage() === totalPages()"
-              (click)="cambiarPagina(currentPage() + 1)">
-              Siguiente →
-            </button>
-          </nav>
+        <!-- CENTINELA Y ESTADO DEL SCROLL INFINITO -->
+        @if (hayMas()) {
+          <div #scrollSentinel class="scroll-sentinel" aria-hidden="true">
+            @if (cargandoMas()) {
+              <div class="feed-status-card">
+                <div class="retro-spinner sm"></div>
+              </div>
+            }
+          </div>
+        } @else if (posts().length > 0) {
+          <p class="feed-end-message">
+            Llegaste al final de las publicaciones.
+          </p>
         }
       }
     </section>

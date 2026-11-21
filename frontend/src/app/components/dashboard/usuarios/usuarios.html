@@ -50,6 +50,7 @@
           <tr [class.row-disabled]="u.activo === false">
             <td class="col-avatar">
               <img
+                appImagenAmpliable
                 [src]="u.imagenUrl || 'https://ui-avatars.com/api/?name=' + u.username + '&background=334155&color=fff'"
                 [alt]="'Foto de ' + u.username"
                 width="36"
@@ -65,11 +66,8 @@
             </td>
             <td class="col-date">{{ u.fechaNacimiento | date:'dd/MM/yyyy':'UTC' }}</td>
             <td>
-              <span
-                class="status-badge"
-                [class.badge-admin]="u.perfil === 'administrador'"
-                [class.badge-user]="u.perfil !== 'administrador'">
-                {{ u.perfil === 'administrador' ? 'Administrador' : 'Usuario' }}
+              <span class="status-badge" [appEstadoUsuario]="u.activo">
+                {{ u.activo | estadoUsuario }}
               </span>
             </td>
             <td>

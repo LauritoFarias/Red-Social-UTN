@@ -5,6 +5,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../services/auth';
 import { Registro } from '../../registro/registro';
 import { environment } from '../../../../environments/environment';
+import { EstadoUsuarioDirective } from '../../../directives/estado-usuario';
+import { ImagenAmpliableDirective } from '../../../directives/imagen-ampliable';
 
 export interface UsuarioDashboard {
   _id: string;
@@ -21,7 +23,7 @@ export interface UsuarioDashboard {
 
 @Component({
   selector: 'app-usuarios',
-  imports: [DatePipe, EstadoUsuarioPipe, Registro],
+  imports: [DatePipe, EstadoUsuarioPipe, Registro, EstadoUsuarioDirective, ImagenAmpliableDirective],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.scss',
 })

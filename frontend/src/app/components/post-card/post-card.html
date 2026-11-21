@@ -3,6 +3,7 @@
   <header class="post-header">
     <div class="autor-info">
       <img
+        appAvatarHover
         [src]="post().autor.imagenUrl || post().autor.fotoPerfil || 'https://ui-avatars.com/api/?name=' + post().autor.username + '&background=4f46e5&color=fff'"
         [alt]="post().autor.username"
         class="avatar"
@@ -111,6 +112,7 @@
         @for (comentario of comentarios(); track comentario._id) {
           <div class="comment-item">
             <img
+              appAvatarHover
               [src]="comentario.autor.imagenUrl || comentario.autor.fotoPerfil || 'https://ui-avatars.com/api/?name=' + comentario.autor.username + '&background=4f46e5&color=fff'"
               [alt]="comentario.autor.username"
               class="comment-avatar"
@@ -124,7 +126,7 @@
                   </time>
                   @if (comentario.editado) {
                     <span class="edited-badge" title="Este comentario fue modificado">
-- (editado)
+                    - (editado)
                     </span>
                   }
                 </div>
