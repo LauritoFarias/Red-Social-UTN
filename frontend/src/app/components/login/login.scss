@@ -130,6 +130,13 @@
   }
 }
 
+.form-header p,
+.form-footer p,
+.form-card .field-error {
+  font-family: var(--font-interface-copy);
+  font-size: 1rem;
+}
+
 .quick-access {
   display: flex;
   flex-direction: column;

@@ -43,6 +43,16 @@
       margin: 0 auto 1rem auto;
     }
   }
+
+  .form-header p,
+  .form-footer p,
+  .field-hint,
+  .field-error,
+  .upload-placeholder,
+  .change-image-text {
+    font-family: var(--font-interface-copy);
+    font-size: 0.95rem;
+  }
 }
 
 .file-upload-box {

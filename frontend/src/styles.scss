@@ -49,6 +49,11 @@
   --radius-lg: 10px;
   --radius-full: 9999px;
   --header-height: 64px;
+  --font-display: 'Noto Sans', 'Segoe UI', sans-serif;
+  --font-ui: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-interface-copy: 'Trebuchet MS', 'Segoe UI', sans-serif;
+  --font-reading: 'Times New Roman', Times, Georgia, serif;
+  --font-reading-size: 1rem;
   --auth-logo-width: 115px; // Ajustá este único valor para cambiar ambos logos a la vez
 
   // Sombras (Eliminadas globalmente salvo excepciones puntuales)
@@ -74,13 +79,23 @@ body {
   background-color: var(--bg-page);
   color: var(--text-main);
   // Tipografía estilo editorial / clásico para huir de la estética genérica de IA
-  font-family: 'Times New Roman', Times, Georgia, serif; 
+  font-family: var(--font-reading);
   -webkit-font-smoothing: antialiased;
 }
 
 // Fuentes de texto limpias para formularios y elementos de interfaz de lectura cómoda
 input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tabs-nav {
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+  font-family: var(--font-ui) !important;
+}
+
+// Tipografía común para encabezados y textos destacados de interfaz.
+h1, h2, h3, h4, h5, h6,
+.brand-link,
+.dropdown-user-info,
+.dropdown-item,
+.tab-item,
+.section-subtitle {
+  font-family: var(--font-display);
 }
 
 /* ==========================================================================
@@ -983,7 +998,7 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
     letter-spacing: -0.02em;
     color: var(--text-main);
     margin: 0;
-    font-family: 'Noto Sans', Georgia, serif;
+    font-family: var(--font-display);
 
     span {
       display: block;
@@ -993,7 +1008,7 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
       font-weight: 400;
       letter-spacing: normal;
       color: var(--text-secondary);
-      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-family: var(--font-ui);
     }
   }
 }
@@ -1026,7 +1041,7 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
       letter-spacing: -0.01em;
       color: var(--text-main);
       margin: 0 0 0.4rem 0;
-      font-family: 'Times New Roman', Times, Georgia, serif;
+      font-family: var(--font-display);
     }
 
     p {
@@ -1098,7 +1113,7 @@ input, textarea, select, button, .btn-primary, .btn-secondary, .btn-action, .tab
 .data-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
   font-size: 0.9rem;
   background-color: var(--bg-surface);
 

@@ -55,12 +55,14 @@
           font-weight: 700;
           font-size: 0.95rem;
           color: var(--text-main);
+          font-family: var(--font-ui);
         }
 
         .username {
           font-weight: 600;
           font-size: 0.85rem;
           color: var(--brand-secondary);
+          font-family: var(--font-ui);
         }
       }
 
@@ -69,7 +71,8 @@
       .fecha {
         display: inline-block;
         width: fit-content;
-        font-size: 0.78rem;
+        font-size: 0.85rem;
+        font-family: var(--font-interface-copy);
         color: var(--text-muted);
         margin-top: 0.12rem;
         text-decoration: none;
@@ -115,15 +118,17 @@
     letter-spacing: -0.01em;
     color: var(--text-main);
     line-height: 1.35;
+    font-family: var(--font-display);
   }
 
   .post-desc {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: var(--font-reading-size);
     line-height: 1.6;
     color: var(--text-secondary);
     white-space: pre-line;
     word-break: break-word;
+    font-family: var(--font-reading);
   }
 
   .post-image-container {
@@ -312,11 +317,12 @@
 
   .comment-text {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: var(--font-reading-size);
     line-height: 1.5;
     color: var(--text-secondary);
     white-space: pre-line;
     word-break: break-word;
+    font-family: var(--font-reading);
   }
 }
 
@@ -383,9 +389,10 @@
 .comments-loading {
   margin: 0;
   text-align: center;
-  font-size: 0.88rem;
+  font-size: 0.95rem;
   color: var(--text-muted);
   padding: 0.5rem 0;
+  font-family: var(--font-interface-copy);
 }
 
 .btn-load-more {
@@ -431,8 +438,8 @@
     }
 
     .post-desc {
-      font-size: 1.05rem;
-      line-height: 1.7;
+      font-size: var(--font-reading-size);
+      line-height: 1.6;
     }
 
     .post-image-container {

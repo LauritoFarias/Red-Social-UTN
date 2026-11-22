@@ -33,6 +33,15 @@
   text-decoration: none;
 }
 
+.profile-page .field-hint,
+.profile-page .field-error,
+.profile-page .upload-placeholder,
+.profile-page .change-image-text,
+.profile-page .confirm-question {
+  font-family: var(--font-interface-copy);
+  font-size: 0.95rem;
+}
+
 // ==========================================================================
 // 2. TARJETA PRINCIPAL Y FILAS DE DATOS EDITABLES
 // ==========================================================================
@@ -48,7 +57,7 @@
     background: linear-gradient(
       135deg,
       var(--brand-secondary) 0%,
-      #6366f1 50%,
+      var(--brand-secondary-hover) 50%,
       var(--brand-primary) 100%
     );
   }
@@ -195,8 +204,8 @@
 
       .field-desc {
         margin: 0.15rem 0 0;
-        font-size: 0.92rem;
-        line-height: 1.5;
+        font-size: var(--font-reading-size);
+        line-height: 1.6;
         color: var(--text-secondary);
         white-space: pre-line;
         word-break: break-word;
@@ -280,9 +289,10 @@
     }
 
     .posts-subtitle {
-      font-size: 0.85rem;
+      font-size: 0.95rem;
       font-weight: 500;
       color: var(--text-muted);
+      font-family: var(--font-interface-copy);
     }
   }
 
@@ -308,7 +318,8 @@
     p {
       margin: 0 0 1.25rem;
       color: var(--text-secondary);
-      font-size: 0.92rem;
+      font-size: 1rem;
+      font-family: var(--font-interface-copy);
     }
 
     .btn-primary {
@@ -341,6 +352,8 @@
   p {
     margin: 0 0 1.5rem;
     color: var(--text-secondary);
+    font-size: 1rem;
+    font-family: var(--font-interface-copy);
   }
 
   .btn-primary {
