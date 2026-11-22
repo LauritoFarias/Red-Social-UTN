@@ -316,3 +316,35 @@
     }
   }
 }
+
+.profile-field-row.is-readonly {
+  cursor: default;
+
+  &:hover {
+    border-color: var(--border-color);
+    background-color: var(--bg-surface);
+  }
+}
+
+.profile-error-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 1.75rem;
+  text-align: center;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    color: var(--text-main);
+  }
+
+  p {
+    margin: 0 0 1.5rem;
+    color: var(--text-secondary);
+  }
+
+  .btn-primary {
+    width: auto;
+    min-width: 180px;
+  }
+}

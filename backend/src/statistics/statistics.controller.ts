@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Param,
   Query,
   Req,
   UseGuards,
@@ -16,11 +17,22 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('statistics')
-@UseGuards(AuthGuard, AdminGuard)
+@UseGuards(AuthGuard)
 export class StatisticsController {
   constructor(private readonly estadisticasService: StatisticsService) {}
 
+  // Accesible para cualquier usuario autenticado: obtiene datos públicos y registra la visita
+  @Get('perfil/:id')
+  obtenerPerfilYRegistrarVisita(
+    @Param('id') perfilId: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const visitanteId = req.user?.sub;
+    return this.estadisticasService.obtenerPerfilYRegistrarVisita(perfilId, visitanteId);
+  }
+
   @Get('publicaciones-por-usuario')
+  @UseGuards(AdminGuard)
   publicacionesPorUsuario(
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
@@ -29,6 +41,7 @@ export class StatisticsController {
   }
 
   @Get('comentarios-por-tiempo')
+  @UseGuards(AdminGuard)
   comentariosPorTiempo(
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
@@ -37,6 +50,7 @@ export class StatisticsController {
   }
 
   @Get('comentarios-por-publicacion')
+  @UseGuards(AdminGuard)
   comentariosPorPublicacion(
     @Query('desde') desde?: string,
     @Query('hasta') hasta?: string,
@@ -45,11 +59,13 @@ export class StatisticsController {
   }
 
   @Get('ingresos-por-usuario')
+  @UseGuards(AdminGuard)
   ingresosPorUsuario() {
     return this.estadisticasService.ingresosPorUsuario();
   }
 
   @Get('visitas-mi-perfil')
+  @UseGuards(AdminGuard)
   visitasMiPerfil(@Req() req: AuthenticatedRequest) {
     const userId = req.user?.sub;
     if (!userId) {
@@ -59,6 +75,7 @@ export class StatisticsController {
   }
 
   @Get('likes-por-dia')
+  @UseGuards(AdminGuard)
   likesPorDia() {
     return this.estadisticasService.likesPorDia();
   }

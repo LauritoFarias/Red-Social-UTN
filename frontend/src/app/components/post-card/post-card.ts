@@ -5,10 +5,11 @@ import { RouterLink } from '@angular/router';
 import { CommentItem, PostItem } from '../../models/post.model';
 import { PostsService } from '../../services/posts';
 import { FechaHoraPipe } from '../../pipes/fecha-hora-pipe';
+import { AvatarHoverDirective } from '../../directives/avatar-hover';
 
 @Component({
   selector: 'app-post-card',
-  imports: [DatePipe, FormsModule, RouterLink, FechaHoraPipe],
+  imports: [DatePipe, FormsModule, RouterLink, FechaHoraPipe, AvatarHoverDirective],
   templateUrl: './post-card.html',
   styleUrl: './post-card.scss',
 })

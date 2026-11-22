@@ -11,12 +11,12 @@
     <div class="form-card registro-card">
 
       <header class="form-header">
-        <img src="assets/images/logo.png" alt="Retro Vibes" class="form-brand-logo" />
+        <img src="assets/images/logo.png" alt="Portal Retro" class="form-brand-logo" />
         <h2>{{ modoAdmin() ? 'Registrar nuevo usuario' : 'Crear una cuenta' }}</h2>
         <p>
           {{ modoAdmin()
             ? 'Completá los datos para dar de alta una cuenta desde el panel.'
-            : 'Unite a la comunidad Retro Vibes.' }}
+            : 'Unite a la comunidad de Portal Retro.' }}
         </p>
       </header>
 
@@ -117,14 +117,37 @@
         <div class="form-row">
           <div class="form-group">
             <label for="password">Contraseña</label>
-            <input
-              id="password"
-              type="password"
-              formControlName="password"
-              placeholder="Contraseña"
-              autocomplete="new-password"
-              [class.input-error]="registroForm.get('password')?.invalid && registroForm.get('password')?.touched"
-            />
+            <div class="password-input-wrapper">
+              <input
+                id="password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Contraseña"
+                autocomplete="new-password"
+                [class.input-error]="registroForm.get('password')?.invalid && registroForm.get('password')?.touched"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                [attr.aria-pressed]="showPassword()"
+              >
+                @if (showPassword()) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-5.94" />
+                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a21.8 21.8 0 0 1-3.17 4.49" />
+                    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                }
+              </button>
+            </div>
 
             @if (registroForm.get('password')?.touched && registroForm.get('password')?.hasError('required')) {
               <span class="field-error">La contraseña es obligatoria.</span>
@@ -138,14 +161,37 @@
 
           <div class="form-group">
             <label for="confirmPassword">Repetir contraseña</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              formControlName="confirmPassword"
-              placeholder="Repetí la contraseña"
-              autocomplete="new-password"
-              [class.input-error]="(registroForm.get('confirmPassword')?.invalid || registroForm.hasError('passwordMismatch')) && registroForm.get('confirmPassword')?.touched"
-            />
+            <div class="password-input-wrapper">
+              <input
+                id="confirmPassword"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="Repetí la contraseña"
+                autocomplete="new-password"
+                [class.input-error]="(registroForm.get('confirmPassword')?.invalid || registroForm.hasError('passwordMismatch')) && registroForm.get('confirmPassword')?.touched"
+              />
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="toggleConfirmPasswordVisibility()"
+                [attr.aria-label]="showConfirmPassword() ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'"
+                [attr.aria-pressed]="showConfirmPassword()"
+              >
+                @if (showConfirmPassword()) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a21.77 21.77 0 0 1 5.06-5.94" />
+                    <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a21.8 21.8 0 0 1-3.17 4.49" />
+                    <path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                }
+              </button>
+            </div>
 
             @if (registroForm.get('confirmPassword')?.touched && registroForm.get('confirmPassword')?.hasError('required')) {
               <span class="field-error">Repetir la contraseña es obligatorio.</span>

@@ -1,5 +1,5 @@
 import { Component, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
-import { DatePipe, isPlatformBrowser } from '@angular/common';
+import { DatePipe, TitleCasePipe, isPlatformBrowser } from '@angular/common';
 import { EstadoUsuarioPipe } from '../../../pipes/estado-usuario-pipe';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../../services/auth';
@@ -23,7 +23,7 @@ export interface UsuarioDashboard {
 
 @Component({
   selector: 'app-usuarios',
-  imports: [DatePipe, EstadoUsuarioPipe, Registro, EstadoUsuarioDirective, ImagenAmpliableDirective],
+  imports: [DatePipe, TitleCasePipe, EstadoUsuarioPipe, Registro, EstadoUsuarioDirective, ImagenAmpliableDirective],
   templateUrl: './usuarios.html',
   styleUrl: './usuarios.scss',
 })

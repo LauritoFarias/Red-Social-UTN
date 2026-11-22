@@ -37,8 +37,9 @@ export class AuthService {
   private platformId = inject(PLATFORM_ID);
   private apiUrl = `${environment.apiUrl}/auth`;
 
-  private warningTimeoutId: any = null;
-  private countdownIntervalId: any = null;
+  private warningTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private countdownIntervalId: ReturnType<typeof setInterval> | null = null;
+  private expiracionTimestamp: number | null = null;
 
   private get isBrowser(): boolean {
     return isPlatformBrowser(this.platformId);
@@ -54,16 +55,32 @@ export class AuthService {
   segundosRestantes = signal<number>(TIEMPO_GRACIA_SEGUNDOS);
   refrescandoToken = signal<boolean>(false);
 
+  constructor() {
+    if (this.isBrowser) {
+      // Al volver a la pestaña o ventana, sincroniza de inmediato contra Date.now()
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          this.actualizarEstadoSesion();
+        }
+      });
+
+      window.addEventListener('focus', () => {
+        this.actualizarEstadoSesion();
+      });
+
+      // Si ya había un token guardado al recargar la página (F5), retoma el temporizador real
+      if (this.getToken()) {
+        this.iniciarTemporizadorSesion();
+      }
+    }
+  }
+
   registrar(formData: FormData): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/registro`, formData).pipe(
       tap((res) => this.guardarSesion(res)),
     );
   }
 
-  /**
-   * Creación de usuarios desde el Dashboard de Administrador:
-   * Envía el token del admin actual y NO sobrescribe la sesión activa.
-   */
   registrarComoAdmin(formData: FormData): Observable<LoginResponse> {
     const token = this.getToken();
     const headers = token
@@ -83,7 +100,7 @@ export class AuthService {
     if (!this.isBrowser || this.refrescandoToken()) return;
 
     const token = this.getToken();
-    if (!token) {
+    if (!token || (this.expiracionTimestamp && Date.now() >= this.expiracionTimestamp)) {
       this.logout();
       return;
     }
@@ -139,7 +156,7 @@ export class AuthService {
             this.currentUser.set(res.usuario);
             localStorage.setItem('usuario', JSON.stringify(res.usuario));
 
-            if (!this.warningTimeoutId && !this.mostrarModalExpiracion()) {
+            if (!this.expiracionTimestamp) {
               this.iniciarTemporizadorSesion();
             }
           }
@@ -152,10 +169,6 @@ export class AuthService {
       );
   }
 
-  /**
-   * Usado por adminGuard: aprovecha verificarSesion() para validar token + rol administrador
-   * incluso si se recarga la página (F5) estando en /dashboard.
-   */
   verificarPerfilAdmin(): Observable<boolean> {
     if (!this.isBrowser) {
       return of(true);
@@ -174,19 +187,83 @@ export class AuthService {
     if (!this.isBrowser) return;
     this.detenerTemporizadores();
 
-    this.warningTimeoutId = setTimeout(() => {
-      this.segundosRestantes.set(TIEMPO_GRACIA_SEGUNDOS);
+    this.expiracionTimestamp = this.obtenerExpiracionToken(this.getToken());
+    this.actualizarEstadoSesion();
+  }
+
+  /**
+   * Evalúa el estado real de la sesión comparando contra Date.now().
+   * Funciona de forma exacta incluso si el navegador pausó los timers en segundo plano.
+   */
+  private actualizarEstadoSesion(): void {
+    if (!this.isBrowser || !this.expiracionTimestamp) return;
+
+    const restanteMs = this.expiracionTimestamp - Date.now();
+
+    if (restanteMs <= 0) {
+      this.logout();
+      return;
+    }
+
+    const graciaMs = TIEMPO_GRACIA_SEGUNDOS * 1000;
+
+    if (restanteMs <= graciaMs) {
+      if (this.warningTimeoutId) {
+        clearTimeout(this.warningTimeoutId);
+        this.warningTimeoutId = null;
+      }
+
+      this.segundosRestantes.set(Math.ceil(restanteMs / 1000));
       this.mostrarModalExpiracion.set(true);
 
-      this.countdownIntervalId = setInterval(() => {
-        const actual = this.segundosRestantes() - 1;
-        if (actual <= 0) {
-          this.logout();
-        } else {
-          this.segundosRestantes.set(actual);
-        }
-      }, 1000);
-    }, TIEMPO_AVISO_MS);
+      if (!this.countdownIntervalId) {
+        // 500ms evita saltos visuales si un tick se retrasa unos milisegundos
+        this.countdownIntervalId = setInterval(() => {
+          this.actualizarEstadoSesion();
+        }, 500);
+      }
+    } else {
+      this.mostrarModalExpiracion.set(false);
+
+      if (this.countdownIntervalId) {
+        clearInterval(this.countdownIntervalId);
+        this.countdownIntervalId = null;
+      }
+
+      if (this.warningTimeoutId) {
+        clearTimeout(this.warningTimeoutId);
+      }
+
+      const tiempoHastaAviso = restanteMs - graciaMs;
+      this.warningTimeoutId = setTimeout(() => {
+        this.actualizarEstadoSesion();
+      }, tiempoHastaAviso);
+    }
+  }
+
+  /**
+   * Extrae la fecha exacta de expiración (claim "exp") del JWT.
+   * Si el token no tiene "exp", usa el tiempo configurado por constantes.
+   */
+  private obtenerExpiracionToken(token: string | null): number {
+    const fallback = Date.now() + TIEMPO_AVISO_MS + TIEMPO_GRACIA_SEGUNDOS * 1000;
+    if (!token) return fallback;
+
+    try {
+      const payloadBase64 = token.split('.')[1];
+      if (!payloadBase64) return fallback;
+
+      const base64 = payloadBase64.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(base64));
+
+      if (typeof payload.exp === 'number') {
+        return payload.exp * 1000;
+      }
+    } catch {
+      // Respaldo si el token no es un JWT estándar
+    }
+
+    return fallback;
   }
 
   private detenerTemporizadores(): void {
@@ -198,6 +275,7 @@ export class AuthService {
       clearInterval(this.countdownIntervalId);
       this.countdownIntervalId = null;
     }
+    this.expiracionTimestamp = null;
     this.mostrarModalExpiracion.set(false);
   }
 

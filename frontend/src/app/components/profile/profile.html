@@ -55,129 +55,171 @@
     </div>
   </header>
 
-  <!-- CONTENIDO DE MI PERFIL -->
+  <!-- CONTENIDO DEL PERFIL -->
   <main class="profile-page" (click)="cerrarMenuUsuario()">
     <div class="profile-container">
 
-      <!-- 1. TARJETA DE DATOS DEL USUARIO (Sin correo ni tipo de usuario) -->
-      @if (usuarioActual(); as user) {
-        <section class="profile-card">
-          <div class="profile-banner"></div>
+      @if (errorPerfil()) {
+        <section class="profile-error-card">
+          <h2>Perfil no disponible</h2>
+          <p>{{ errorPerfil() }}</p>
+          <a routerLink="/feed" class="btn-primary">Volver al Feed</a>
+        </section>
+      } @else {
+        <!-- 1. TARJETA DE DATOS DEL USUARIO (Editable solo si es el perfil propio) -->
+        @if (usuarioMostrado(); as user) {
+          <section class="profile-card">
+            <div class="profile-banner"></div>
 
-          <div class="profile-body">
-            <div class="profile-top-row">
-              <div class="profile-avatar-wrapper">
-                <img
-                  [src]="avatarUsuarioActual()"
-                  [alt]="user.username"
-                  class="profile-avatar"
-                />
-                <button
-                  type="button"
-                  class="btn-edit-avatar"
-                  (click)="abrirModalEditar('imagen')"
-                  title="Cambiar foto de perfil">
-                  ✎
-                </button>
+            <div class="profile-body">
+              <div class="profile-top-row">
+                <div class="profile-avatar-wrapper">
+                  <img
+                    [src]="avatarPerfilMostrado()"
+                    [alt]="user.username"
+                    class="profile-avatar"
+                  />
+                  @if (esPerfilPropio()) {
+                    <button
+                      type="button"
+                      class="btn-edit-avatar"
+                      (click)="abrirModalEditar('imagen')"
+                      title="Cambiar foto de perfil">
+                      ✎
+                    </button>
+                  }
+                </div>
+
+                @if (esPerfilPropio()) {
+                  <button
+                    type="button"
+                    class="btn-change-password"
+                    (click)="abrirModalEditar('password')">
+                    🔒 Cambiar contraseña
+                  </button>
+                }
               </div>
 
-              <button
-                type="button"
-                class="btn-change-password"
-                (click)="abrirModalEditar('password')">
-                🔒 Cambiar contraseña
-              </button>
+              <!-- Grilla de propiedades del usuario -->
+              <div class="profile-fields-list">
+                <!-- Nombre -->
+                <div
+                  class="profile-field-row"
+                  [class.is-readonly]="!esPerfilPropio()"
+                  (click)="esPerfilPropio() && abrirModalEditar('nombre')">
+                  <div class="field-info">
+                    <span class="field-label">Nombre</span>
+                    <strong class="field-value">{{ user.nombre }}</strong>
+                  </div>
+                  @if (esPerfilPropio()) {
+                    <span class="btn-edit-inline">Editar ✎</span>
+                  }
+                </div>
+
+                <!-- Apellido -->
+                <div
+                  class="profile-field-row"
+                  [class.is-readonly]="!esPerfilPropio()"
+                  (click)="esPerfilPropio() && abrirModalEditar('apellido')">
+                  <div class="field-info">
+                    <span class="field-label">Apellido</span>
+                    <strong class="field-value">{{ user.apellido }}</strong>
+                  </div>
+                  @if (esPerfilPropio()) {
+                    <span class="btn-edit-inline">Editar ✎</span>
+                  }
+                </div>
+
+                <!-- Nombre de usuario -->
+                <div
+                  class="profile-field-row"
+                  [class.is-readonly]="!esPerfilPropio()"
+                  (click)="esPerfilPropio() && abrirModalEditar('username')">
+                  <div class="field-info">
+                    <span class="field-label">Nombre de usuario</span>
+                    <strong class="field-value username-val">{{ user.username | usernameArroba }}</strong>
+                  </div>
+                  @if (esPerfilPropio()) {
+                    <span class="btn-edit-inline">Editar ✎</span>
+                  }
+                </div>
+
+                <!-- Fecha de nacimiento -->
+                <div
+                  class="profile-field-row"
+                  [class.is-readonly]="!esPerfilPropio()"
+                  (click)="esPerfilPropio() && abrirModalEditar('fechaNacimiento')">
+                  <div class="field-info">
+                    <span class="field-label">Fecha de nacimiento</span>
+                    <strong class="field-value">
+                      @if (user.fechaNacimiento) {
+                        {{ user.fechaNacimiento | date:'dd/MM/yyyy':'UTC' }}
+                      } @else {
+                        Sin especificar
+                      }
+                    </strong>
+                  </div>
+                  @if (esPerfilPropio()) {
+                    <span class="btn-edit-inline">Editar ✎</span>
+                  }
+                </div>
+
+                <!-- Descripción -->
+                <div
+                  class="profile-field-row full-width"
+                  [class.is-readonly]="!esPerfilPropio()"
+                  (click)="esPerfilPropio() && abrirModalEditar('descripcion')">
+                  <div class="field-info">
+                    <span class="field-label">Descripción breve</span>
+                    <p class="field-desc">{{ user.descripcion || 'Sin descripción.' }}</p>
+                  </div>
+                  @if (esPerfilPropio()) {
+                    <span class="btn-edit-inline">Editar ✎</span>
+                  }
+                </div>
+              </div>
             </div>
+          </section>
+        }
 
-            <!-- Grilla de propiedades editables del usuario -->
-            <div class="profile-fields-list">
-              <!-- Nombre -->
-              <div class="profile-field-row" (click)="abrirModalEditar('nombre')">
-                <div class="field-info">
-                  <span class="field-label">Nombre</span>
-                  <strong class="field-value">{{ user.nombre }}</strong>
-                </div>
-                <span class="btn-edit-inline">Editar ✎</span>
-              </div>
+        <!-- 2. ÚLTIMAS 3 PUBLICACIONES DEL USUARIO -->
+        <section class="profile-posts-section">
+          <div class="section-title-bar">
+            <h2>Últimas publicaciones</h2>
+            <span class="posts-subtitle">Mostrando las 3 más recientes</span>
+          </div>
 
-              <!-- Apellido -->
-              <div class="profile-field-row" (click)="abrirModalEditar('apellido')">
-                <div class="field-info">
-                  <span class="field-label">Apellido</span>
-                  <strong class="field-value">{{ user.apellido }}</strong>
-                </div>
-                <span class="btn-edit-inline">Editar ✎</span>
+          <div class="posts-list">
+            @for (item of ultimosPosts(); track item._id) {
+              <app-post-card
+                [post]="item"
+                [currentUserId]="currentUserId()"
+                [esAdmin]="esAdmin()"
+                (likeToggled)="manejarLike($event)"
+                (deleted)="manejarEliminacion($event)"
+              />
+            } @empty {
+              <div class="profile-empty-posts">
+                @if (esPerfilPropio()) {
+                  <h3>Todavía no realizaste publicaciones</h3>
+                  <p>Cuando compartas algo en el feed, tus últimas 3 publicaciones aparecerán aquí.</p>
+                  <a routerLink="/feed" class="btn-primary">Ir al Feed a publicar</a>
+                } @else {
+                  <h3>Sin publicaciones todavía</h3>
+                  <p>Este usuario todavía no compartió publicaciones en el feed.</p>
+                }
               </div>
-
-              <!-- Nombre de usuario -->
-              <div class="profile-field-row" (click)="abrirModalEditar('username')">
-                <div class="field-info">
-                  <span class="field-label">Nombre de usuario</span>
-                  <strong class="field-value username-val">{{ user.username | usernameArroba }}</strong>
-                </div>
-                <span class="btn-edit-inline">Editar ✎</span>
-              </div>
-              
-              <!-- Fecha de nacimiento -->
-              <div class="profile-field-row" (click)="abrirModalEditar('fechaNacimiento')">
-                <div class="field-info">
-                  <span class="field-label">Fecha de nacimiento</span>
-                  <strong class="field-value">
-                    @if (user.fechaNacimiento) {
-                      {{ user.fechaNacimiento | date:'dd/MM/yyyy':'UTC' }}
-                    } @else {
-                      Sin especificar
-                    }
-                  </strong>
-                </div>
-                <span class="btn-edit-inline">Editar ✎</span>
-              </div>
-
-              <!-- Descripción -->
-              <div class="profile-field-row full-width" (click)="abrirModalEditar('descripcion')">
-                <div class="field-info">
-                  <span class="field-label">Descripción breve</span>
-                  <p class="field-desc">{{ user.descripcion || 'Sin descripción.' }}</p>
-                </div>
-                <span class="btn-edit-inline">Editar ✎</span>
-              </div>
-            </div>
+            }
           </div>
         </section>
       }
-
-      <!-- 2. ÚLTIMAS 3 PUBLICACIONES DEL USUARIO -->
-      <section class="profile-posts-section">
-        <div class="section-title-bar">
-          <h2>Últimas publicaciones</h2>
-          <span class="posts-subtitle">Mostrando las 3 más recientes</span>
-        </div>
-
-        <div class="posts-list">
-          @for (item of ultimosPosts(); track item._id) {
-            <app-post-card
-              [post]="item"
-              [currentUserId]="currentUserId()"
-              [esAdmin]="esAdmin()"
-              (likeToggled)="manejarLike($event)"
-              (deleted)="manejarEliminacion($event)"
-            />
-          } @empty {
-            <div class="profile-empty-posts">
-              <h3>Todavía no realizaste publicaciones</h3>
-              <p>Cuando compartas algo en el feed, tus últimas 3 publicaciones aparecerán aquí.</p>
-              <a routerLink="/feed" class="btn-primary">Ir al Feed a publicar</a>
-            </div>
-          }
-        </div>
-      </section>
 
     </div>
   </main>
 }
 
-<!-- MODAL DE EDICIÓN DE CAMPO + CONFIRMACIÓN DE CAMBIOS -->
-@if (campoEditando(); as campo) {
+<!-- MODAL DE EDICIÓN DE CAMPO + CONFIRMACIÓN DE CAMBIOS (Solo perfil propio) -->
+@if (esPerfilPropio() && campoEditando(); as campo) {
   <div class="modal-backdrop" (click)="cerrarModalEditar()">
     <div class="modal-card profile-edit-modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
@@ -256,7 +298,7 @@
             </div>
           }
 
-          <!-- Fecha de nacimiento (idéntico al Registro) -->
+          <!-- Fecha de nacimiento -->
           @if (campo === 'fechaNacimiento') {
             <div class="form-group">
               <label id="birthDateEditLabel">Fecha de nacimiento</label>
@@ -313,7 +355,7 @@
             </div>
           }
 
-          <!-- Imagen de perfil (idéntico al Registro) -->
+          <!-- Imagen de perfil -->
           @if (campo === 'imagen') {
             <div class="form-group">
               <label for="profileImageEdit">Nueva imagen de perfil</label>
@@ -354,7 +396,7 @@
             </div>
           }
 
-          <!-- Contraseña (ingresar 2 veces la nueva contraseña) -->
+          <!-- Contraseña -->
           @if (campo === 'password') {
             <div class="form-group">
               <label for="newPassword">Nueva contraseña</label>

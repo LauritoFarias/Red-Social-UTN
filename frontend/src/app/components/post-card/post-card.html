@@ -2,18 +2,25 @@
   <!-- CABECERA DEL POST -->
   <header class="post-header">
     <div class="autor-info">
-      <img
-        appAvatarHover
-        [src]="post().autor.imagenUrl || post().autor.fotoPerfil || 'https://ui-avatars.com/api/?name=' + post().autor.username + '&background=4f46e5&color=fff'"
-        [alt]="post().autor.username"
-        class="avatar"
-      />
+      <a
+        [routerLink]="['/perfil', post().autor._id]"
+        class="autor-avatar-link"
+        [title]="'Ver perfil de ' + post().autor.username">
+        <img
+          appAvatarHover
+          [src]="post().autor.imagenUrl || post().autor.fotoPerfil || 'https://ui-avatars.com/api/?name=' + post().autor.username + '&background=4f46e5&color=fff'"
+          [alt]="post().autor.username"
+          class="avatar"
+        />
+      </a>
       <div class="autor-meta">
         <div class="autor-names">
-          @if (post().autor.nombre) {
-            <span class="nombre">{{ post().autor.nombre }} {{ post().autor.apellido }}</span>
-          }
-          <span class="username">{{ post().autor.username }}</span>
+          <a
+            [routerLink]="['/perfil', post().autor._id]"
+            class="username autor-link"
+            [title]="'Ver perfil de ' + post().autor.username">
+            {{ post().autor.username }}
+          </a>
         </div>
 
         <!-- Fecha como enlace subrayable estilo Facebook -->
@@ -111,22 +118,31 @@
       <div class="comments-list">
         @for (comentario of comentarios(); track comentario._id) {
           <div class="comment-item">
-            <img
-              appAvatarHover
-              [src]="comentario.autor.imagenUrl || comentario.autor.fotoPerfil || 'https://ui-avatars.com/api/?name=' + comentario.autor.username + '&background=4f46e5&color=fff'"
-              [alt]="comentario.autor.username"
-              class="comment-avatar"
-            />
+            <a
+              [routerLink]="['/perfil', comentario.autor._id]"
+              class="autor-avatar-link"
+              [title]="'Ver perfil de ' + comentario.autor.username">
+              <img
+                appAvatarHover
+                [src]="comentario.autor.imagenUrl || comentario.autor.fotoPerfil || 'https://ui-avatars.com/api/?name=' + comentario.autor.username + '&background=4f46e5&color=fff'"
+                [alt]="comentario.autor.username"
+                class="comment-avatar"
+              />
+            </a>
             <div class="comment-content">
               <div class="comment-header">
                 <div class="comment-author-meta">
-                  <span class="comment-username">{{ comentario.autor.username }}</span>
+                  <a
+                    [routerLink]="['/perfil', comentario.autor._id]"
+                    class="comment-username autor-link">
+                    {{ comentario.autor.username }}
+                  </a>
                   <time class="comment-date">
                     {{ comentario.createdAt | fechaHora }}
                   </time>
                   @if (comentario.editado) {
                     <span class="edited-badge" title="Este comentario fue modificado">
-                    - (editado)
+                      (editado)
                     </span>
                   }
                 </div>

@@ -65,14 +65,11 @@
               <span class="table-username">{{ u.username }}</span>
             </td>
             <td class="col-date">{{ u.fechaNacimiento | date:'dd/MM/yyyy':'UTC' }}</td>
-            <td>
-              <span class="status-badge" [appEstadoUsuario]="u.activo">
-                {{ u.activo | estadoUsuario }}
-              </span>
-            </td>
+            <td>{{ u.perfil | titlecase }}</td>
             <td>
               <span
                 class="status-badge"
+                [appEstadoUsuario]="u.activo"
                 [class.badge-active]="u.activo !== false"
                 [class.badge-inactive]="u.activo === false">
                 {{ u.activo | estadoUsuario }}

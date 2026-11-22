@@ -16,8 +16,13 @@ export class Login {
   private router = inject(Router);
 
   private readonly DEMO_USER = {
+    identificador: 'ritareyes@hotmail.com', // TODO: completar con correo o username del usuario demo
+    password: 'RitaReyes.68',      // TODO: completar con contraseña del usuario demo
+  };
+
+  private readonly DEMO_ADMIN = {
     identificador: 'ivanlaurito@hotmail.com',
-    password: 'Contraseñasegura.123'
+    password: 'Contraseñasegura.123',
   };
 
   loginForm = this.fb.group({
@@ -25,13 +30,21 @@ export class Login {
     password: ['', [Validators.required]],
   });
 
+  showPassword = signal(false);
+
   isSubmitting = signal(false);
   errorMessage = signal('');
 
-  quickLogin(): void {
+  togglePasswordVisibility(): void {
+    this.showPassword.update((visible) => !visible);
+  }
+
+  quickLogin(rol: 'usuario' | 'administrador'): void {
+    const credenciales = rol === 'administrador' ? this.DEMO_ADMIN : this.DEMO_USER;
+
     this.loginForm.patchValue({
-      identificador: this.DEMO_USER.identificador,
-      password: this.DEMO_USER.password,
+      identificador: credenciales.identificador,
+      password: credenciales.password,
     });
     this.onSubmit();
   }

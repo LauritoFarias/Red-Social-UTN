@@ -8,19 +8,17 @@
   justify-content: center;
   padding: 6rem 3.5rem 3rem;
 
-  // Logo independiente del contenido principal
   .brand-logo {
     position: absolute;
-    top: 2.5rem;
-    left: 3rem;
-    width: clamp(100px, 11vw, 150px);
+    top: 2rem;
+    left: 2rem;
+    width: var(--auth-logo-width);
     z-index: 2;
 
     img {
       display: block;
       width: 100%;
       height: auto;
-      max-height: 90px;
       object-fit: contain;
     }
   }
@@ -35,11 +33,12 @@
   }
 
   // Galería de tres imágenes
+  // Galería de tres imágenes (disposición irregular y superpuesta)
   .brand-gallery {
     position: relative;
     width: 100%;
-    max-width: 650px;
-    height: 420px;
+    max-width: 540px;
+    height: 390px;
     margin: 0 auto;
   }
 
@@ -47,8 +46,8 @@
     position: absolute;
     display: block;
     object-fit: contain;
-    transition: transform 0.3s ease;
-    
+    transition: transform 0.3s ease, z-index 0.1s ease;
+
     // EXCEPCIÓN SOLICITADA: Únicamente estas tres fotos conservan sombreado (drop-shadow)
     filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.15));
 
@@ -67,39 +66,39 @@
     );
 
     &:hover {
-      transform: scale(1.03);
+      transform: scale(1.04);
       z-index: 5;
     }
   }
 
-  // Imagen vertical protagonista
+  // Imagen izquierda
   .image-one {
     width: 240px;
     height: 360px;
-    left: 0;
-    top: 20px;
-    z-index: 1;
     max-height: 190px;
+    left: 35px;
+    top: 38px;
+    z-index: 2;
   }
 
-  // Imagen horizontal
+  // Imagen superior derecha (se superpone por detrás con image-one)
   .image-two {
     width: 340px;
     height: 210px;
-    right: 0;
-    top: 5px;
-    z-index: 2;
     max-height: 250px;
+    right: 15px;
+    top: 10px;
+    z-index: 1;
   }
 
-  // Imagen intermedia
+  // Imagen inferior central (se superpone por delante con ambas)
   .image-three {
     width: 290px;
     height: 240px;
-    right: 35px;
-    bottom: 0;
-    z-index: 3;
     max-height: 210px;
+    left: 125px;
+    bottom: 12px;
+    z-index: 3;
   }
 
   .brand-description {
@@ -115,15 +114,60 @@
    LOGIN - SEPARACIÓN DE BOTONES
    ========================================================= */
 
+/* =========================================================
+   LOGIN - SEPARACIÓN DE BOTONES Y ACCESOS RÁPIDOS
+   ========================================================= */
+
 .login-actions {
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1.1rem;
   width: 100%;
 
   button {
     width: 100%;
     margin: 0;
+  }
+}
+
+.quick-access {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.quick-access-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  user-select: none;
+  pointer-events: none;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: var(--border-color);
+  }
+}
+
+.quick-access-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+
+  .btn-secondary {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.9rem;
   }
 }
 
@@ -167,14 +211,79 @@
   }
 }
 
+@media (max-width: 960px) {
+  .brand-panel {
+    padding: 6rem 1.5rem 2rem;
+
+    .brand-logo {
+      top: 1.5rem;
+      left: 1.5rem;
+      width: 105px;
+    }
+
+    .brand-content {
+      gap: 1.25rem;
+    }
+
+    .brand-gallery {
+      max-width: 380px;
+      height: 245px;
+    }
+
+    .gallery-image {
+      height: 140px;
+    }
+
+    .image-one {
+      width: 170px;
+      max-height: 115px;
+      left: 15px;
+      top: 25px;
+    }
+
+    .image-two {
+      width: 220px;
+      max-height: 150px;
+      right: 10px;
+      top: 5px;
+    }
+
+    .image-three {
+      width: 195px;
+      max-height: 125px;
+      left: 90px;
+      bottom: 8px;
+    }
+  }
+}
+
 @media (max-width: 480px) {
   .brand-panel {
     .brand-gallery {
-      min-height: 115px;
+      max-width: 310px;
+      height: 205px;
     }
 
     .gallery-image {
       height: 110px;
+    }
+
+    .image-one {
+      width: 140px;
+      left: 8px;
+      top: 22px;
+    }
+
+    .image-two {
+      width: 185px;
+      right: 5px;
+      top: 5px;
+    }
+
+    .image-three {
+      width: 165px;
+      left: 72px;
+      bottom: 6px;
     }
   }
 }

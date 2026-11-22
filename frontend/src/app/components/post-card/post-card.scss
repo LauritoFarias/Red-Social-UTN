@@ -453,3 +453,21 @@
     padding: 1.35rem 1.75rem;
   }
 }
+
+.autor-avatar-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.autor-link {
+  color: var(--text-main);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+    color: var(--brand-secondary);
+  }
+}

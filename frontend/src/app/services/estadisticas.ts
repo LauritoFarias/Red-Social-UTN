@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AuthService } from './auth';
+import { AuthService, UsuarioSesion } from './auth';
 
 export interface PublicacionesPorUsuarioItem {
   usuarioId: string;
@@ -68,6 +68,13 @@ export class EstadisticasService {
     if (desde) params = params.set('desde', desde);
     if (hasta) params = params.set('hasta', hasta);
     return params;
+  }
+
+  getPerfilUsuario(usuarioId: string): Observable<{ usuario: UsuarioSesion }> {
+    return this.http.get<{ usuario: UsuarioSesion }>(
+      `${this.apiUrl}/perfil/${usuarioId}`,
+      { headers: this.getAuthHeaders() },
+    );
   }
 
   getPublicacionesPorUsuario(

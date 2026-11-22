@@ -37,9 +37,8 @@
 
     .form-brand-logo {
       display: block;
-      max-height: 56px;
-      width: auto;
-      max-width: 220px;
+      width: var(--auth-logo-width);
+      height: auto;
       object-fit: contain;
       margin: 0 auto 1rem auto;
     }

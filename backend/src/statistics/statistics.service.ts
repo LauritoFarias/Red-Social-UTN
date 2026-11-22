@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Usuario, UsuarioDocument } from '../usuarios/entities/usuario.entity';
@@ -34,6 +38,38 @@ export class StatisticsService {
       : new Date(fechaHasta.getTime() - 30 * 24 * 60 * 60 * 1000);
 
     return { $gte: fechaDesde, $lte: fechaHasta };
+  }
+
+  // Obtiene el perfil público de un usuario y guarda la visita si quien mira es un tercero
+  async obtenerPerfilYRegistrarVisita(perfilId: string, visitanteId?: string) {
+    if (!Types.ObjectId.isValid(perfilId)) {
+      throw new BadRequestException('ID de usuario inválido');
+    }
+
+    const usuario = await this.usuarioModel
+      .findOne({ _id: perfilId, activo: { $ne: false } })
+      .select(
+        '_id nombre apellido username imagenUrl fotoPerfil descripcion fechaNacimiento perfil activo createdAt',
+      )
+      .lean()
+      .exec();
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (
+      visitanteId &&
+      Types.ObjectId.isValid(visitanteId) &&
+      visitanteId !== perfilId
+    ) {
+      await this.perfilVisitaModel.create({
+        perfilId: new Types.ObjectId(perfilId),
+        visitanteId: new Types.ObjectId(visitanteId),
+      });
+    }
+
+    return { usuario };
   }
 
   // 1. Cantidad de publicaciones por usuario en un lapso de tiempo

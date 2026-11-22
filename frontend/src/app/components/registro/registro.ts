@@ -223,6 +223,17 @@ export class Registro implements OnInit, OnDestroy {
     );
   });
 
+  showPassword = signal(false);
+  showConfirmPassword = signal(false);
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update((visible) => !visible);
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword.update((visible) => !visible);
+  }
+
   isSubmitting = signal(false);
   errorMessage = signal('');
   successMessage = signal('');

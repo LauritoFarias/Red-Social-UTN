@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
-import { UsernameArrobaPipe } from '../../pipes/username-arroba-pipe';
 import {
   AbstractControl,
   FormBuilder,
@@ -10,11 +9,14 @@ import {
   Validators,
 } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
-import { AuthService } from '../../services/auth';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subscription, forkJoin } from 'rxjs';
+import { AuthService, UsuarioSesion } from '../../services/auth';
 import { PostsService } from '../../services/posts';
+import { EstadisticasService } from '../../services/estadisticas';
 import { PostItem } from '../../models/post.model';
 import { PostCard } from '../post-card/post-card';
+import { UsernameArrobaPipe } from '../../pipes/username-arroba-pipe';
 
 export type CampoEditable =
   | 'nombre'
@@ -68,18 +70,43 @@ const profileImageValidator: ValidatorFn = (
 })
 export class Profile implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
   private authService = inject(AuthService);
   private postsService = inject(PostsService);
+  private estadisticasService = inject(EstadisticasService);
   private platformId = inject(PLATFORM_ID);
 
+  private routeSub?: Subscription;
+
   paginaLista = signal<boolean>(false);
+  errorPerfil = signal<string>('');
   ultimosPosts = signal<PostItem[]>([]);
   totalPublicaciones = signal<number>(0);
 
+  // ID proveniente de /perfil/:id (null si se entra a /perfil)
+  perfilRouteId = signal<string | null>(null);
+  usuarioVisitado = signal<UsuarioSesion | null>(null);
+
+  // Usuario autenticado (siempre usado en el header y para permisos)
   usuarioActual = computed(() => this.authService.currentUser());
   currentUserId = computed(() => this.authService.currentUserId());
-  esAdmin = computed(() => this.authService.currentUser()?.perfil === 'admin');
+  esAdmin = this.authService.isAdmin;
   menuUsuarioAbierto = signal<boolean>(false);
+
+  // Define si estamos viendo nuestro propio perfil o el de un tercero
+  esPerfilPropio = computed(() => {
+    const routeId = this.perfilRouteId();
+    return !routeId || routeId === this.currentUserId();
+  });
+
+  perfilIdActivo = computed(() =>
+    this.esPerfilPropio() ? this.currentUserId() : (this.perfilRouteId() ?? ''),
+  );
+
+  // Usuario que se renderiza en la tarjeta de perfil
+  usuarioMostrado = computed<UsuarioSesion | null>(() =>
+    this.esPerfilPropio() ? this.usuarioActual() : this.usuarioVisitado(),
+  );
 
   // Estado del Modal de Edición en 2 pasos (1: Formulario, 2: Confirmar cambio)
   campoEditando = signal<CampoEditable | null>(null);
@@ -135,13 +162,11 @@ export class Profile implements OnInit, OnDestroy {
     { validators: passwordMatchValidator },
   );
 
-  avatarUsuarioActual = computed(() => {
-    const user = this.usuarioActual();
-    const url = user?.imagenUrl || user?.fotoPerfil;
-    if (url) return url;
-    const nombre = user?.username || user?.nombre || 'U';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}&background=4f46e5&color=fff`;
-  });
+  // Avatar del usuario autenticado (para el header)
+  avatarUsuarioActual = computed(() => this.resolverAvatar(this.usuarioActual()));
+
+  // Avatar del perfil que se está visualizando en la tarjeta
+  avatarPerfilMostrado = computed(() => this.resolverAvatar(this.usuarioMostrado()));
 
   tituloModal = computed(() => {
     switch (this.campoEditando()) {
@@ -166,12 +191,25 @@ export class Profile implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.cargarDatosPerfil();
+      this.routeSub = this.route.paramMap.subscribe((params) => {
+        const id = params.get('id');
+        this.perfilRouteId.set(id);
+        this.cerrarModalEditar();
+        this.cargarDatosPerfil();
+      });
     }
   }
 
   ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
     this.limpiarPreviewUrl();
+  }
+
+  private resolverAvatar(user: UsuarioSesion | null): string {
+    const url = user?.imagenUrl || user?.fotoPerfil;
+    if (url) return url;
+    const nombre = user?.username || user?.nombre || 'U';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(nombre)}&background=4f46e5&color=fff`;
   }
 
   private limpiarPreviewUrl(): void {
@@ -184,31 +222,71 @@ export class Profile implements OnInit, OnDestroy {
 
   private cargarDatosPerfil(): void {
     this.paginaLista.set(false);
+    this.errorPerfil.set('');
     const inicio = Date.now();
-    const userId = this.currentUserId();
+    const targetId = this.perfilIdActivo();
 
-    if (!userId) {
+    if (!targetId) {
       this.paginaLista.set(true);
       return;
     }
 
-    this.postsService.getPostsByUser(userId, 3).subscribe({
-      next: async (res) => {
-        this.ultimosPosts.set(res.data);
-        this.totalPublicaciones.set(res.meta.total);
+    if (this.esPerfilPropio()) {
+      this.usuarioVisitado.set(null);
+
+      this.postsService.getPostsByUser(targetId, 3).subscribe({
+        next: async (res) => {
+          this.ultimosPosts.set(res.data);
+          this.totalPublicaciones.set(res.meta.total);
+
+          const urlsAPrecargar = [
+            this.avatarUsuarioActual(),
+            ...res.data.map((p) => p.imagenUrl || ''),
+          ].filter((url) => !!url);
+
+          await this.precargarImagenes(urlsAPrecargar);
+
+          const restante = Math.max(0, 500 - (Date.now() - inicio));
+          setTimeout(() => this.paginaLista.set(true), restante);
+        },
+        error: (err) => {
+          console.error('Error al cargar las publicaciones del perfil:', err);
+          this.paginaLista.set(true);
+        },
+      });
+      return;
+    }
+
+    // Perfil de un tercero: trae datos públicos + registra la visita en el backend
+    forkJoin({
+      perfil: this.estadisticasService.getPerfilUsuario(targetId),
+      posts: this.postsService.getPostsByUser(targetId, 3),
+    }).subscribe({
+      next: async ({ perfil, posts }) => {
+        this.usuarioVisitado.set(perfil.usuario);
+        this.ultimosPosts.set(posts.data);
+        this.totalPublicaciones.set(posts.meta.total);
 
         const urlsAPrecargar = [
           this.avatarUsuarioActual(),
-          ...res.data.map((p) => p.imagenUrl || ''),
+          this.resolverAvatar(perfil.usuario),
+          ...posts.data.map((p) => p.imagenUrl || ''),
         ].filter((url) => !!url);
 
         await this.precargarImagenes(urlsAPrecargar);
 
-        const restante = Math.max(0, 600 - (Date.now() - inicio));
+        const restante = Math.max(0, 500 - (Date.now() - inicio));
         setTimeout(() => this.paginaLista.set(true), restante);
       },
-      error: (err) => {
-        console.error('Error al cargar las publicaciones del perfil:', err);
+      error: (err: HttpErrorResponse) => {
+        console.error('Error al cargar el perfil visitado:', err);
+        this.usuarioVisitado.set(null);
+        this.ultimosPosts.set([]);
+        this.errorPerfil.set(
+          err.status === 404
+            ? 'El perfil que buscás no existe o fue deshabilitado.'
+            : 'No se pudo cargar este perfil. Intentá nuevamente.',
+        );
         this.paginaLista.set(true);
       },
     });
@@ -231,6 +309,8 @@ export class Profile implements OnInit, OnDestroy {
   // ================= FLUJO DE EDICIÓN DE DATOS DEL PERFIL =================
 
   abrirModalEditar(campo: CampoEditable): void {
+    if (!this.esPerfilPropio()) return;
+
     const user = this.usuarioActual();
     if (!user) return;
 
@@ -300,7 +380,6 @@ export class Profile implements OnInit, OnDestroy {
     this.limpiarPreviewUrl();
   }
 
-  // Selectores de fecha iguales al Registro
   onDatePartChange(part: 'day' | 'month' | 'year', event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     if (part === 'day') this.selectedDay.set(value);
@@ -334,7 +413,6 @@ export class Profile implements OnInit, OnDestroy {
     }
   }
 
-  // Selector de imagen igual al Registro
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
@@ -351,7 +429,6 @@ export class Profile implements OnInit, OnDestroy {
     }
   }
 
-  // Paso 1: Validar el formulario pequeño y pasar a la pantalla de confirmación
   avanzarAConfirmacion(): void {
     const campo = this.campoEditando();
     if (!campo) return;
@@ -387,7 +464,6 @@ export class Profile implements OnInit, OnDestroy {
     this.confirmandoCambio.set(false);
   }
 
-  // Paso 2: Confirmar cambios y enviar al backend
   confirmarYGuardar(): void {
     const campo = this.campoEditando();
     if (!campo || this.guardandoCambio()) return;
@@ -412,7 +488,6 @@ export class Profile implements OnInit, OnDestroy {
       next: () => {
         this.guardandoCambio.set(false);
         this.cerrarModalEditar();
-        // Refrescamos también las 3 publicaciones por si cambió su foto o username
         this.postsService.getPostsByUser(this.currentUserId(), 3).subscribe({
           next: (res) => this.ultimosPosts.set(res.data),
         });
@@ -455,7 +530,9 @@ export class Profile implements OnInit, OnDestroy {
   manejarEliminacion(postId: string): void {
     this.postsService.deletePost(postId).subscribe({
       next: () => {
-        this.postsService.getPostsByUser(this.currentUserId(), 3).subscribe({
+        const targetId = this.perfilIdActivo();
+        if (!targetId) return;
+        this.postsService.getPostsByUser(targetId, 3).subscribe({
           next: (res) => {
             this.ultimosPosts.set(res.data);
             this.totalPublicaciones.set(res.meta.total);

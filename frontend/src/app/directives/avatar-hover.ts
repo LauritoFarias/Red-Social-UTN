@@ -4,7 +4,7 @@ import { Directive, signal } from '@angular/core';
   selector: '[appAvatarHover]',
   host: {
     '[style.transition]': '"filter 0.2s ease"',
-    '[style.filter]': 'hover() ? "brightness(1.22) contrast(0.92)" : "none"',
+    '[style.filter]': 'hover() ? "contrast(0.78) brightness(1.25)" : "none"',
     '(mouseenter)': 'hover.set(true)',
     '(mouseleave)': 'hover.set(false)',
   },

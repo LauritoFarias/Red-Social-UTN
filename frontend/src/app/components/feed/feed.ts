@@ -6,10 +6,11 @@ import { PostsService } from '../../services/posts';
 import { AuthService } from '../../services/auth';
 import { PostItem } from '../../models/post.model';
 import { PostCard } from '../../components/post-card/post-card';
+import { AvatarHoverDirective } from '../../directives/avatar-hover';
 
 @Component({
   selector: 'app-feed',
-  imports: [PostCard, ReactiveFormsModule, RouterLink],
+  imports: [PostCard, ReactiveFormsModule, RouterLink, AvatarHoverDirective],
   templateUrl: './feed.html',
   styleUrl: './feed.scss',
 })
