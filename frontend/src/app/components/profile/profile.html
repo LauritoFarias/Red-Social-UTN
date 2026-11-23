@@ -3,60 +3,11 @@
     <div class="retro-spinner"></div>
   </div>
 } @else {
-  @if (mensajeExito()) {
-    <div class="toast-success" role="status" aria-live="polite">
-      <span class="toast-icon">✔</span>
-      <span>{{ mensajeExito() }}</span>
-    </div>
-  }
-
-  <!-- HEADER STICKY GLOBAL -->
-  <header class="app-header">
-    <div class="header-inner">
-      <a routerLink="/feed" class="brand-link">
-        <span class="brand-dot"></span>
-        <span class="brand-title">Retro Vibes</span>
-      </a>
-
-      <div class="header-actions">
-        <a routerLink="/feed" class="btn-new-post-sm">
-          ← Ir al Feed
-        </a>
-
-        <div class="user-menu-wrapper">
-          <button
-            type="button"
-            class="avatar-trigger"
-            (click)="toggleMenuUsuario($event)"
-            aria-label="Menú de usuario">
-            <img
-              [src]="avatarUsuarioActual()"
-              [alt]="usuarioActual()?.username || 'Usuario'"
-            />
-          </button>
-
-          @if (menuUsuarioAbierto()) {
-            <div class="user-dropdown" (click)="$event.stopPropagation()">
-              <div class="dropdown-user-info">
-                <strong>{{ usuarioActual()?.nombre }}</strong>
-                <span>&#64;{{ usuarioActual()?.username }}</span>
-              </div>
-              <hr />
-              <a routerLink="/perfil" class="dropdown-item" (click)="cerrarMenuUsuario()">
-                Ver perfil
-              </a>
-              <button type="button" class="dropdown-item dropdown-logout" (click)="cerrarSesion()">
-                Cerrar sesión
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- HEADER STICKY COMPARTIDO -->
+  <app-header [mostrarVolverFeed]="true" />
 
   <!-- CONTENIDO DEL PERFIL -->
-  <main class="profile-page" (click)="cerrarMenuUsuario()">
+  <main class="profile-page">
     <div class="profile-container">
 
       @if (errorPerfil()) {
@@ -230,7 +181,7 @@
       </div>
 
       @if (errorEdicion()) {
-        <div class="alert-error">{{ errorEdicion() }}</div>
+        <div class="alert-error" role="alert">{{ errorEdicion() }}</div>
       }
 
       <!-- PASO 1: FORMULARIO PEQUEÑO DEL DATO A CAMBIAR -->
@@ -408,11 +359,13 @@
                 autocomplete="new-password"
                 [class.input-error]="editForm.get('password')?.invalid && editForm.get('password')?.touched"
               />
-              @if (editForm.get('password')?.touched && editForm.get('password')?.hasError('required')) {
-                <span class="field-error">La contraseña es obligatoria.</span>
-              }
               @if (editForm.get('password')?.touched && editForm.get('password')?.hasError('pattern')) {
                 <span class="field-error">Mínimo 8 caracteres, una mayúscula y un número.</span>
+              } @else {
+                <span class="field-hint">Mínimo 8 caracteres, una mayúscula y un número.</span>
+              }
+              @if (editForm.get('password')?.touched && editForm.get('password')?.hasError('required')) {
+                <span class="field-error">La contraseña es obligatoria.</span>
               }
             </div>
 

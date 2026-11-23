@@ -42,7 +42,7 @@
           class="btn-delete-post"
           (click)="confirmarBaja()"
           title="Dar de baja publicación">
-          🗑️ {{ esAdmin() && post().autor._id !== currentUserId() ? 'Dar de baja (Admin)' : 'Eliminar' }}
+          {{ esAdmin() && post().autor._id !== currentUserId() ? 'Dar de baja (Admin)' : 'Eliminar' }}
         </button>
       }
     </div>

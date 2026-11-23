@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, map, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { ToastService } from './toast';
 
 export const TIEMPO_AVISO_MS = 60 * 1000;
 export const TIEMPO_GRACIA_SEGUNDOS = 30;
@@ -55,6 +56,8 @@ export class AuthService {
   segundosRestantes = signal<number>(TIEMPO_GRACIA_SEGUNDOS);
   refrescandoToken = signal<boolean>(false);
 
+  private toastService = inject(ToastService);
+
   constructor() {
     if (this.isBrowser) {
       // Al volver a la pestaña o ventana, sincroniza de inmediato contra Date.now()
@@ -90,7 +93,7 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.apiUrl}/registro`, formData, { headers });
   }
 
-  login(credenciales: { identificador: string; password: string }): Observable<LoginResponse> {
+  login(credenciales: { username: string; password: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, credenciales).pipe(
       tap((res) => this.guardarSesion(res)),
     );
@@ -120,9 +123,16 @@ export class AuthService {
     });
   }
 
-  logout(): void {
+  logout(motivo: 'manual' | 'expirada' = 'manual'): void {
     this.detenerTemporizadores();
     this.limpiarSesion();
+
+    if (motivo === 'manual') {
+      this.toastService.show('Sesión cerrada exitosamente', 'success');
+    } else {
+      this.toastService.show('Tu sesión expiró. Volvé a iniciar sesión.', 'info');
+    }
+
     this.router.navigate(['/login']);
   }
 

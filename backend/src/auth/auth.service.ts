@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -24,17 +25,18 @@ export class AuthService {
   ) {}
 
   async login(loginAuthDto: LoginAuthDto) {
-    const identificador = loginAuthDto.identificador.trim();
+    const username = loginAuthDto.username.trim();
 
-    const user = await this.usuarioModel.findOne({
-      $or: [
-        { correo: identificador.toLowerCase() },
-        { username: identificador },
-      ],
-    });
+    const user = await this.usuarioModel.findOne({ username });
 
     if (!user || !(await bcrypt.compare(loginAuthDto.password, user.password))) {
       throw new UnauthorizedException('Credenciales incorrectas.');
+    }
+
+    if (user.activo === false) {
+      throw new ForbiddenException(
+        'Tu cuenta se encuentra deshabilitada. Contactá a un administrador.',
+      );
     }
 
     await this.usuarioModel.updateOne(
@@ -50,15 +52,23 @@ export class AuthService {
     file: Express.Multer.File,
     authHeader?: string,
   ) {
+    const correoNormalizado = createUsuarioDto.correo.trim().toLowerCase();
+    const usernameLimpio = createUsuarioDto.username.trim();
+
     const existe = await this.usuarioModel.findOne({
       $or: [
-        { correo: createUsuarioDto.correo.toLowerCase() },
-        { username: createUsuarioDto.username },
+        { correo: correoNormalizado },
+        { username: usernameLimpio },
       ],
     });
 
     if (existe) {
-      throw new ConflictException('El correo o nombre de usuario ya está registrado.');
+      if (existe.correo === correoNormalizado) {
+        throw new ConflictException(
+          'Ya existe una cuenta registrada con ese correo electrónico.',
+        );
+      }
+      throw new ConflictException('Ese nombre de usuario ya está en uso.');
     }
 
     let perfilAsignado: 'usuario' | 'administrador' = 'usuario';
@@ -67,8 +77,14 @@ export class AuthService {
       const token = authHeader.split(' ')[1];
       try {
         const payload = await this.jwtService.verifyAsync(token);
-        const solicitante = await this.usuarioModel.findById(payload.sub).select('perfil activo');
-        if (solicitante && solicitante.activo !== false && solicitante.perfil === 'administrador') {
+        const solicitante = await this.usuarioModel
+          .findById(payload.sub)
+          .select('perfil activo');
+        if (
+          solicitante &&
+          solicitante.activo !== false &&
+          solicitante.perfil === 'administrador'
+        ) {
           perfilAsignado = 'administrador';
         }
       } catch {
@@ -81,13 +97,18 @@ export class AuthService {
 
     const newUser = await this.usuarioModel.create({
       ...createUsuarioDto,
-      correo: createUsuarioDto.correo.toLowerCase(),
+      nombre: createUsuarioDto.nombre.trim(),
+      apellido: createUsuarioDto.apellido.trim(),
+      correo: correoNormalizado,
+      username: usernameLimpio,
+      descripcion: createUsuarioDto.descripcion?.trim() ?? '',
       password: hashedPassword,
       imagenUrl,
       perfil: perfilAsignado,
     });
 
-    return this.generateToken(newUser);
+    const { password, ...usuarioSinPassword } = newUser.toObject();
+    return { usuario: usuarioSinPassword };
   }
 
   async getPerfil(id: string) {
@@ -129,6 +150,9 @@ export class AuthService {
     const user = await this.usuarioModel.findById(userId);
     if (!user) {
       throw new UnauthorizedException('Usuario no encontrado.');
+    }
+    if (user.activo === false) {
+      throw new ForbiddenException('Tu cuenta se encuentra deshabilitada.');
     }
     return this.generateToken(user);
   }

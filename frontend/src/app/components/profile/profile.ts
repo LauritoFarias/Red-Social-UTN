@@ -14,9 +14,12 @@ import { Subscription, forkJoin } from 'rxjs';
 import { AuthService, UsuarioSesion } from '../../services/auth';
 import { PostsService } from '../../services/posts';
 import { EstadisticasService } from '../../services/estadisticas';
+import { ToastService } from '../../services/toast';
 import { PostItem } from '../../models/post.model';
+import { AppHeader } from '../header/header';
 import { PostCard } from '../post-card/post-card';
 import { UsernameArrobaPipe } from '../../pipes/username-arroba-pipe';
+import { getHttpErrorMessage } from '../../utils/http-error';
 
 export type CampoEditable =
   | 'nombre'
@@ -64,7 +67,7 @@ const profileImageValidator: ValidatorFn = (
 
 @Component({
   selector: 'app-profile',
-  imports: [DatePipe, RouterLink, ReactiveFormsModule, PostCard, UsernameArrobaPipe],
+  imports: [AppHeader, DatePipe, RouterLink, ReactiveFormsModule, PostCard, UsernameArrobaPipe],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
@@ -74,6 +77,7 @@ export class Profile implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private postsService = inject(PostsService);
   private estadisticasService = inject(EstadisticasService);
+  private toastService = inject(ToastService);
   private platformId = inject(PLATFORM_ID);
 
   private routeSub?: Subscription;
@@ -87,11 +91,10 @@ export class Profile implements OnInit, OnDestroy {
   perfilRouteId = signal<string | null>(null);
   usuarioVisitado = signal<UsuarioSesion | null>(null);
 
-  // Usuario autenticado (siempre usado en el header y para permisos)
+  // Usuario autenticado (para permisos y edición de perfil propio)
   usuarioActual = computed(() => this.authService.currentUser());
   currentUserId = computed(() => this.authService.currentUserId());
   esAdmin = this.authService.isAdmin;
-  menuUsuarioAbierto = signal<boolean>(false);
 
   // Define si estamos viendo nuestro propio perfil o el de un tercero
   esPerfilPropio = computed(() => {
@@ -113,7 +116,6 @@ export class Profile implements OnInit, OnDestroy {
   confirmandoCambio = signal<boolean>(false);
   guardandoCambio = signal<boolean>(false);
   errorEdicion = signal<string>('');
-  mensajeExito = signal<string>('');
 
   // Estado para selector de fecha (idéntico a Registro)
   readonly months = [
@@ -161,9 +163,6 @@ export class Profile implements OnInit, OnDestroy {
     },
     { validators: passwordMatchValidator },
   );
-
-  // Avatar del usuario autenticado (para el header)
-  avatarUsuarioActual = computed(() => this.resolverAvatar(this.usuarioActual()));
 
   // Avatar del perfil que se está visualizando en la tarjeta
   avatarPerfilMostrado = computed(() => this.resolverAvatar(this.usuarioMostrado()));
@@ -240,7 +239,7 @@ export class Profile implements OnInit, OnDestroy {
           this.totalPublicaciones.set(res.meta.total);
 
           const urlsAPrecargar = [
-            this.avatarUsuarioActual(),
+            this.resolverAvatar(this.usuarioActual()),
             ...res.data.map((p) => p.imagenUrl || ''),
           ].filter((url) => !!url);
 
@@ -268,7 +267,7 @@ export class Profile implements OnInit, OnDestroy {
         this.totalPublicaciones.set(posts.meta.total);
 
         const urlsAPrecargar = [
-          this.avatarUsuarioActual(),
+          this.resolverAvatar(this.usuarioActual()),
           this.resolverAvatar(perfil.usuario),
           ...posts.data.map((p) => p.imagenUrl || ''),
         ].filter((url) => !!url);
@@ -285,7 +284,7 @@ export class Profile implements OnInit, OnDestroy {
         this.errorPerfil.set(
           err.status === 404
             ? 'El perfil que buscás no existe o fue deshabilitado.'
-            : 'No se pudo cargar este perfil. Intentá nuevamente.',
+            : getHttpErrorMessage(err, 'No se pudo cargar este perfil. Intentá nuevamente.'),
         );
         this.paginaLista.set(true);
       },
@@ -416,8 +415,12 @@ export class Profile implements OnInit, OnDestroy {
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
-
     const control = this.editForm.get('profileImage');
+
+    if (!file && control?.value) {
+      return;
+    }
+
     control?.setValue(file);
     control?.markAsTouched();
     control?.updateValueAndValidity();
@@ -491,24 +494,16 @@ export class Profile implements OnInit, OnDestroy {
         this.postsService.getPostsByUser(this.currentUserId(), 3).subscribe({
           next: (res) => this.ultimosPosts.set(res.data),
         });
-        this.mostrarToastExito('¡Cambios guardados correctamente!');
+        this.toastService.show('¡Cambios guardados correctamente!', 'success');
       },
       error: (err: HttpErrorResponse) => {
         this.guardandoCambio.set(false);
         this.confirmandoCambio.set(false);
-        const msg = Array.isArray(err.error?.message)
-          ? err.error.message[0]
-          : err.error?.message || 'No se pudo guardar el cambio. Intentá nuevamente.';
-        this.errorEdicion.set(msg);
+        this.errorEdicion.set(
+          getHttpErrorMessage(err, 'No se pudo guardar el cambio. Intentá nuevamente.'),
+        );
       },
     });
-  }
-
-  private mostrarToastExito(texto: string): void {
-    this.mensajeExito.set(texto);
-    setTimeout(() => {
-      this.mensajeExito.set('');
-    }, 3000);
   }
 
   // ================= ACCIONES EN LAS PUBLICACIONES DEL PERFIL =================
@@ -540,23 +535,5 @@ export class Profile implements OnInit, OnDestroy {
         });
       },
     });
-  }
-
-  // ================= MENÚ DE USUARIO (HEADER) =================
-
-  toggleMenuUsuario(event: Event): void {
-    event.stopPropagation();
-    this.menuUsuarioAbierto.update((abierto) => !abierto);
-  }
-
-  cerrarMenuUsuario(): void {
-    if (this.menuUsuarioAbierto()) {
-      this.menuUsuarioAbierto.set(false);
-    }
-  }
-
-  cerrarSesion(): void {
-    this.menuUsuarioAbierto.set(false);
-    this.authService.logout();
   }
 }

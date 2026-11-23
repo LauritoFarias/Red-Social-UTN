@@ -8,7 +8,7 @@ import {
   input,
   output,
   signal,
-  viewChild
+  viewChild,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -17,20 +17,20 @@ import {
   ReactiveFormsModule,
   ValidationErrors,
   ValidatorFn,
-  Validators
+  Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AuthService } from '../../services/auth';
 import { take } from 'rxjs';
+import { AuthService } from '../../services/auth';
+import { ToastService } from '../../services/toast';
+import { getHttpErrorMessage } from '../../utils/http-error';
 
 interface RegistroDraft {
   nombre: string;
   apellido: string;
   email: string;
   username: string;
-  password: string;
-  confirmPassword: string;
   birthDate: string;
   description: string;
   profileImage: File | null;
@@ -41,8 +41,21 @@ interface RegistroDraft {
 
 let registroDraftCache: RegistroDraft | null = null;
 
+const noWhitespaceValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  if (
+    typeof control.value === 'string' &&
+    control.value.length > 0 &&
+    control.value.trim().length === 0
+  ) {
+    return { required: true };
+  }
+  return null;
+};
+
 const passwordMatchValidator: ValidatorFn = (
-  control: AbstractControl
+  control: AbstractControl,
 ): ValidationErrors | null => {
   const password = control.get('password')?.value;
   const confirmPassword = control.get('confirmPassword')?.value;
@@ -51,13 +64,11 @@ const passwordMatchValidator: ValidatorFn = (
     return null;
   }
 
-  return password === confirmPassword
-    ? null
-    : { passwordMismatch: true };
+  return password === confirmPassword ? null : { passwordMismatch: true };
 };
 
 const futureDateValidator: ValidatorFn = (
-  control: AbstractControl
+  control: AbstractControl,
 ): ValidationErrors | null => {
   const value = control.value;
 
@@ -69,16 +80,14 @@ const futureDateValidator: ValidatorFn = (
   const todayString = [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, '0'),
-    String(today.getDate()).padStart(2, '0')
+    String(today.getDate()).padStart(2, '0'),
   ].join('-');
 
-  return value > todayString
-    ? { futureDate: true }
-    : null;
+  return value > todayString ? { futureDate: true } : null;
 };
 
 const profileImageValidator: ValidatorFn = (
-  control: AbstractControl
+  control: AbstractControl,
 ): ValidationErrors | null => {
   const file = control.value as File | null;
 
@@ -86,13 +95,7 @@ const profileImageValidator: ValidatorFn = (
     return null;
   }
 
-  const allowedTypes = [
-    'image/png',
-    'image/jpeg',
-    'image/webp',
-    'image/gif'
-  ];
-
+  const allowedTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
   const maxSize = 5 * 1024 * 1024;
 
   if (!allowedTypes.includes(file.type)) {
@@ -115,6 +118,7 @@ const profileImageValidator: ValidatorFn = (
 export class Registro implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
   private router = inject(Router);
   private hostElement = inject(ElementRef<HTMLElement>);
 
@@ -124,72 +128,62 @@ export class Registro implements OnInit, OnDestroy {
   usuarioCreado = output<void>();
   cancelar = output<void>();
 
-  registroForm = this.fb.group({
-    nombre: [
-      '',
-      [
+  registroForm = this.fb.group(
+    {
+      nombre: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.maxLength(50),
+          Validators.pattern(/^[\p{L}]+(?:[ '\-][\p{L}]+)*$/u),
+        ],
+      ],
+      apellido: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.maxLength(50),
+          Validators.pattern(/^[\p{L}]+(?:[ '\-][\p{L}]+)*$/u),
+        ],
+      ],
+      email: [
+        '',
+        [
+          Validators.required,
+          Validators.email,
+          Validators.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/),
+        ],
+      ],
+      profileImage: this.fb.control<File | null>(null, [
         Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(50),
-        Validators.pattern(/^[\p{L}]+(?:[ '\-][\p{L}]+)*$/u)
-      ]
-    ],
-    apellido: [
-      '',
-      [
-        Validators.required,
-        Validators.minLength(2),
-        Validators.maxLength(50),
-        Validators.pattern(/^[\p{L}]+(?:[ '\-][\p{L}]+)*$/u)
-      ]
-    ],
-    email: [
-      '',
-      [
-        Validators.required,
-        Validators.email
-      ]
-    ],
-    profileImage: this.fb.control<File | null>(
-      null,
-      [Validators.required, profileImageValidator]
-    ),
-    username: [
-      '',
-      [
-        Validators.required,
-        Validators.pattern(/^[a-zA-Z0-9._]{3,20}$/)
-      ]
-    ],
-    password: [
-      '',
-      [
-        Validators.required,
-        Validators.pattern(/^(?=.*[A-Z])(?=.*\d).{8,}$/)
-      ]
-    ],
-    confirmPassword: [
-      '',
-      [Validators.required]
-    ],
-    birthDate: [
-      '',
-      [
-        Validators.required,
-        futureDateValidator
-      ]
-    ],
-    description: [
-      '',
-      [
-        Validators.required,
-        Validators.maxLength(350)
-      ]
-    ],
-    perfil: ['usuario']
-  }, {
-    validators: passwordMatchValidator
-  });
+        profileImageValidator,
+      ]),
+      username: [
+        '',
+        [Validators.required, Validators.pattern(/^[a-zA-Z0-9._]{3,20}$/)],
+      ],
+      password: [
+        '',
+        [Validators.required, Validators.pattern(/^(?=.*[A-Z])(?=.*\d).{8,}$/)],
+      ],
+      confirmPassword: ['', [Validators.required]],
+      birthDate: ['', [Validators.required, futureDateValidator]],
+      description: [
+        '',
+        [
+          Validators.required,
+          noWhitespaceValidator,
+          Validators.maxLength(350),
+        ],
+      ],
+      perfil: ['usuario'],
+    },
+    {
+      validators: passwordMatchValidator,
+    },
+  );
 
   readonly months = [
     { value: '01', label: 'Enero' },
@@ -207,7 +201,9 @@ export class Registro implements OnInit, OnDestroy {
   ];
 
   readonly currentYear = new Date().getFullYear();
-  readonly years = Array.from({ length: 110 }, (_, i) => String(this.currentYear - i));
+  readonly years = Array.from({ length: 110 }, (_, i) =>
+    String(this.currentYear - i),
+  );
 
   selectedDay = signal<string>('');
   selectedMonth = signal<string>('');
@@ -219,7 +215,7 @@ export class Registro implements OnInit, OnDestroy {
     const daysInMonth = new Date(year, month, 0).getDate();
 
     return Array.from({ length: daysInMonth }, (_, i) =>
-      String(i + 1).padStart(2, '0')
+      String(i + 1).padStart(2, '0'),
     );
   });
 
@@ -236,7 +232,6 @@ export class Registro implements OnInit, OnDestroy {
 
   isSubmitting = signal(false);
   errorMessage = signal('');
-  successMessage = signal('');
   imagePreview = signal<string | null>(null);
 
   today = this.getTodayString();
@@ -245,6 +240,9 @@ export class Registro implements OnInit, OnDestroy {
     this.registroForm.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => {
+        if (this.errorMessage()) {
+          this.errorMessage.set('');
+        }
         this.guardarBorradorEnMemoria();
       });
   }
@@ -255,20 +253,26 @@ export class Registro implements OnInit, OnDestroy {
       this.selectedMonth.set(registroDraftCache.selectedMonth);
       this.selectedYear.set(registroDraftCache.selectedYear);
 
-      this.registroForm.patchValue({
-        nombre: registroDraftCache.nombre,
-        apellido: registroDraftCache.apellido,
-        email: registroDraftCache.email,
-        username: registroDraftCache.username,
-        password: registroDraftCache.password,
-        confirmPassword: registroDraftCache.confirmPassword,
-        birthDate: registroDraftCache.birthDate,
-        description: registroDraftCache.description,
-        profileImage: registroDraftCache.profileImage
-      }, { emitEvent: false });
+      this.registroForm.patchValue(
+        {
+          nombre: registroDraftCache.nombre,
+          apellido: registroDraftCache.apellido,
+          email: registroDraftCache.email,
+          username: registroDraftCache.username,
+          birthDate: registroDraftCache.birthDate,
+          description: registroDraftCache.description,
+          profileImage: registroDraftCache.profileImage,
+        },
+        { emitEvent: false },
+      );
 
-      if (registroDraftCache.profileImage && this.registroForm.get('profileImage')?.valid) {
-        this.imagePreview.set(URL.createObjectURL(registroDraftCache.profileImage));
+      if (
+        registroDraftCache.profileImage &&
+        this.registroForm.get('profileImage')?.valid
+      ) {
+        this.imagePreview.set(
+          URL.createObjectURL(registroDraftCache.profileImage),
+        );
       }
     }
   }
@@ -289,20 +293,20 @@ export class Registro implements OnInit, OnDestroy {
       apellido: raw.apellido ?? '',
       email: raw.email ?? '',
       username: raw.username ?? '',
-      password: raw.password ?? '',
-      confirmPassword: raw.confirmPassword ?? '',
       birthDate: raw.birthDate ?? '',
       description: raw.description ?? '',
       profileImage: raw.profileImage ?? null,
       selectedDay: this.selectedDay(),
       selectedMonth: this.selectedMonth(),
-      selectedYear: this.selectedYear()
+      selectedYear: this.selectedYear(),
     };
   }
 
   private scrollToError(selector: string): void {
     setTimeout(() => {
-      const target = this.hostElement.nativeElement.querySelector(selector) as HTMLElement | null;
+      const target = this.hostElement.nativeElement.querySelector(
+        selector,
+      ) as HTMLElement | null;
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -353,15 +357,19 @@ export class Registro implements OnInit, OnDestroy {
     return [
       date.getFullYear(),
       String(date.getMonth() + 1).padStart(2, '0'),
-      String(date.getDate()).padStart(2, '0')
+      String(date.getDate()).padStart(2, '0'),
     ].join('-');
   }
 
   onImageSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0] ?? null;
-
     const control = this.registroForm.get('profileImage');
+
+    if (!file && control?.value) {
+      return;
+    }
+
     control?.setValue(file);
     control?.markAsTouched();
     control?.updateValueAndValidity();
@@ -390,18 +398,17 @@ export class Registro implements OnInit, OnDestroy {
 
     this.isSubmitting.set(true);
     this.errorMessage.set('');
-    this.successMessage.set('');
 
     const rawValues = this.registroForm.getRawValue();
     const formData = new FormData();
 
-    formData.append('nombre', rawValues.nombre ?? '');
-    formData.append('apellido', rawValues.apellido ?? '');
-    formData.append('correo', rawValues.email ?? '');
-    formData.append('username', rawValues.username ?? '');
+    formData.append('nombre', (rawValues.nombre ?? '').trim());
+    formData.append('apellido', (rawValues.apellido ?? '').trim());
+    formData.append('correo', (rawValues.email ?? '').trim());
+    formData.append('username', (rawValues.username ?? '').trim());
     formData.append('password', rawValues.password ?? '');
     formData.append('fechaNacimiento', rawValues.birthDate ?? '');
-    formData.append('descripcion', rawValues.description ?? '');
+    formData.append('descripcion', (rawValues.description ?? '').trim());
 
     const perfilElegido = this.modoAdmin()
       ? (rawValues.perfil ?? 'usuario')
@@ -436,30 +443,28 @@ export class Registro implements OnInit, OnDestroy {
           this.selectedMonth.set('');
           this.selectedYear.set('');
           this.imagePreview.set(null);
+          this.toastService.show('Usuario registrado exitosamente', 'success');
           this.usuarioCreado.emit();
           return;
         }
 
         registroDraftCache = null;
-        this.successMessage.set('¡Usuario registrado correctamente! Redirigiendo...');
-
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
+        this.toastService.show(
+          '¡Cuenta creada exitosamente! Ya podés iniciar sesión.',
+          'success',
+        );
+        this.router.navigate(['/login']);
       },
       error: (err: HttpErrorResponse) => {
         this.isSubmitting.set(false);
-        if (err.error?.message) {
-          const msg = Array.isArray(err.error.message)
-            ? err.error.message[0]
-            : err.error.message;
-          this.errorMessage.set(msg);
-        } else {
-          this.errorMessage.set('Ocurrió un error al registrar el usuario. Intentá nuevamente.');
-        }
-
+        this.errorMessage.set(
+          getHttpErrorMessage(
+            err,
+            'No se pudo completar el registro. Intentá nuevamente.',
+          ),
+        );
         this.scrollToError('.alert-error');
-      }
+      },
     });
   }
 }

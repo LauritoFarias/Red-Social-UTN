@@ -1,8 +1,27 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AuthService } from '../../services/auth';
+import { ToastService } from '../../services/toast';
+import { getHttpErrorMessage } from '../../utils/http-error';
+
+const noWhitespaceValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  if (typeof control.value === 'string' && control.value.length > 0 && control.value.trim().length === 0) {
+    return { required: true };
+  }
+  return null;
+};
 
 @Component({
   selector: 'app-login',
@@ -13,27 +32,37 @@ import { AuthService } from '../../services/auth';
 export class Login {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
   private router = inject(Router);
 
   private readonly DEMO_USER = {
-    identificador: 'ritareyes@hotmail.com', // TODO: completar con correo o username del usuario demo
-    password: 'RitaReyes.68',      // TODO: completar con contraseña del usuario demo
+    username: 'Reyes68',
+    password: 'RitaReyes.68',
   };
 
   private readonly DEMO_ADMIN = {
-    identificador: 'ivanlaurito@hotmail.com',
+    username: 'Lauro',
     password: 'Contraseñasegura.123',
   };
 
   loginForm = this.fb.group({
-    identificador: ['', [Validators.required]],
+    username: ['', [Validators.required, noWhitespaceValidator]],
     password: ['', [Validators.required]],
   });
 
   showPassword = signal(false);
-
   isSubmitting = signal(false);
   errorMessage = signal('');
+
+  constructor() {
+    this.loginForm.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        if (this.errorMessage()) {
+          this.errorMessage.set('');
+        }
+      });
+  }
 
   togglePasswordVisibility(): void {
     this.showPassword.update((visible) => !visible);
@@ -43,12 +72,12 @@ export class Login {
     const credenciales = rol === 'administrador' ? this.DEMO_ADMIN : this.DEMO_USER;
 
     this.loginForm.patchValue({
-      identificador: credenciales.identificador,
+      username: credenciales.username,
       password: credenciales.password,
     });
     this.onSubmit();
   }
-
+  
   onSubmit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
@@ -58,28 +87,24 @@ export class Login {
     this.isSubmitting.set(true);
     this.errorMessage.set('');
 
-    const { identificador, password } = this.loginForm.getRawValue();
+    const { username, password } = this.loginForm.getRawValue();
 
     this.authService
       .login({
-        identificador: identificador ?? '',
+        username: (username ?? '').trim(),
         password: password ?? '',
       })
       .subscribe({
         next: () => {
           this.isSubmitting.set(false);
+          this.toastService.show('Iniciaste sesión exitosamente', 'success');
           this.router.navigate(['/feed']);
         },
         error: (err: HttpErrorResponse) => {
           this.isSubmitting.set(false);
-          if (err.error?.message) {
-            const msg = Array.isArray(err.error.message)
-              ? err.error.message[0]
-              : err.error.message;
-            this.errorMessage.set(msg);
-          } else {
-            this.errorMessage.set('Error al iniciar sesión. Verificá tus datos.');
-          }
+          this.errorMessage.set(
+            getHttpErrorMessage(err, 'No se pudo iniciar sesión. Intentá nuevamente.'),
+          );
         },
       });
   }

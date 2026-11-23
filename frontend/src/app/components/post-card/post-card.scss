@@ -85,24 +85,6 @@
       }
     }
   }
-
-  .btn-delete {
-    background-color: transparent;
-    color: var(--text-muted);
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    padding: 0.35rem 0.65rem;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-
-    &:hover {
-      background-color: var(--color-error-bg);
-      color: var(--color-error);
-      border-color: var(--color-error-border);
-    }
-  }
 }
 
 // ==========================================================================

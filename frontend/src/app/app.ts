@@ -1,6 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth';
+import { ToastService } from './services/toast';
 
 @Component({
   selector: 'app-root',
@@ -10,4 +11,5 @@ import { AuthService } from './services/auth';
 })
 export class App {
   authService = inject(AuthService);
+  toastService = inject(ToastService)
 }

@@ -9,6 +9,7 @@ import {
   PerfilVisita,
   PerfilVisitaDocument,
 } from '../statistics/entities/profile-view.entity';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class UsuariosService {
@@ -92,5 +93,11 @@ export class UsuariosService {
       throw new NotFoundException('Usuario no encontrado');
     }
     return usuario;
+  }
+
+  private validarObjectId(id: string): void {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException('El identificador de usuario no es válido.');
+    }
   }
 }

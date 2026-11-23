@@ -2,8 +2,8 @@ import { IsNotEmpty, IsString } from 'class-validator';
 
 export class LoginAuthDto {
   @IsString()
-  @IsNotEmpty({ message: 'Ingresá tu correo o nombre de usuario.' })
-  identificador: string;
+  @IsNotEmpty({ message: 'El nombre de usuario es obligatorio.' })
+  username: string;
 
   @IsString()
   @IsNotEmpty({ message: 'La contraseña es obligatoria.' })

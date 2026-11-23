@@ -4,61 +4,15 @@
     <div class="retro-spinner"></div>
   </div>
 } @else {
-  <!-- HEADER STICKY -->
-  <header class="app-header">
-    <div class="header-inner">
-      <a routerLink="/feed" class="brand-link">
-        <span class="brand-dot"></span>
-        <span class="brand-title">Retro Vibes</span>
-      </a>
-
-      <div class="header-actions">
-        @if (esAdmin()) {
-          <a routerLink="/dashboard" class="btn-dashboard-sm">
-            Dashboard
-          </a>
-        }
-
-        <button type="button" class="btn-new-post-sm" (click)="abrirModalCrear()">
-          + Publicar
-        </button>
-
-        <!-- Menú de Usuario -->
-        <div class="user-menu-wrapper">
-          <button
-            type="button"
-            class="avatar-trigger"
-            (click)="toggleMenuUsuario($event)"
-            aria-label="Menú de usuario">
-            <img
-              appAvatarHover
-              [src]="avatarUsuarioActual()"
-              [alt]="usuarioActual()?.username || 'Usuario'"
-            />
-          </button>
-
-          @if (menuUsuarioAbierto()) {
-            <div class="user-dropdown" (click)="$event.stopPropagation()">
-              <div class="dropdown-user-info">
-                <strong>{{ usuarioActual()?.nombre }}</strong>
-                <span>&#64;{{ usuarioActual()?.username }}</span>
-              </div>
-              <hr />
-              <a routerLink="/perfil" class="dropdown-item" (click)="cerrarMenuUsuario()">
-                Ver perfil
-              </a>
-              <button type="button" class="dropdown-item dropdown-logout" (click)="cerrarSesion()">
-                Cerrar sesión
-              </button>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- HEADER STICKY COMPARTIDO -->
+  <app-header
+    [mostrarPublicar]="true"
+    (publicarClick)="abrirModalCrear()"
+    (logoClickEnFeed)="irAlInicioFeed()"
+  />
 
   <!-- CONTENIDO PRINCIPAL DEL FEED -->
-  <main class="feed-page" (click)="cerrarMenuUsuario()">
+  <main class="feed-page">
     <section class="feed-container">
 
       <!-- CAJA RÁPIDA PARA ABRIR EL MODAL DE CREAR PUBLICACIÓN -->
@@ -157,7 +111,7 @@
 
       <form [formGroup]="postForm" (ngSubmit)="crearPublicacion()">
         @if (errorCreacion()) {
-          <div class="alert-error">{{ errorCreacion() }}</div>
+          <div class="alert-error" role="alert">{{ errorCreacion() }}</div>
         }
 
         <div class="form-group">

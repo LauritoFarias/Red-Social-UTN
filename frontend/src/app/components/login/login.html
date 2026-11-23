@@ -3,7 +3,7 @@
   <section class="brand-panel">
 
     <div class="brand-logo">
-      <img src="assets/images/logo.png" alt="Retro Vibes" />
+      <img src="assets/images/logo.png" alt="Portal Retro" />
     </div>
 
     <div class="brand-content">
@@ -48,25 +48,25 @@
       </header>
 
       @if (errorMessage()) {
-        <div class="alert-error">
+        <div class="alert-error" role="alert">
           {{ errorMessage() }}
         </div>
       }
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
         <div class="form-group">
-          <label for="identificador">Correo o nombre de usuario</label>
+          <label for="username">Nombre de usuario</label>
           <input
-            id="identificador"
+            id="username"
             type="text"
-            formControlName="identificador"
-            placeholder="Correo o nombre de usuario"
+            formControlName="username"
+            placeholder="Nombre de usuario"
             autocomplete="username"
-            [class.input-error]="loginForm.get('identificador')?.invalid && loginForm.get('identificador')?.touched"
+            [class.input-error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
           />
 
-          @if (loginForm.get('identificador')?.touched && loginForm.get('identificador')?.hasError('required')) {
-            <span class="field-error">Ingresá tu correo o nombre de usuario.</span>
+          @if (loginForm.get('username')?.touched && loginForm.get('username')?.hasError('required')) {
+            <span class="field-error">Ingresá tu nombre de usuario.</span>
           }
         </div>
 
@@ -112,12 +112,8 @@
         </div>
 
         <div class="login-actions">
-          <button
-            type="submit"
-            class="btn-primary"
-            [disabled]="isSubmitting()"
-          >
-            Iniciar sesión
+          <button type="submit" class="btn-primary" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Iniciando sesión...' : 'Iniciar sesión' }}
           </button>
 
           <div class="quick-access" role="group" aria-labelledby="quickAccessLabel">

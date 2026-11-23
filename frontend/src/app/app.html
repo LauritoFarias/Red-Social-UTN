@@ -29,3 +29,17 @@
     </div>
   </div>
 }
+
+@if (toastService.toast(); as currentToast) {
+  <div
+    class="toast-success"
+    [class.toast-info]="currentToast.type === 'info'"
+    role="status"
+    aria-live="polite"
+  >
+    <span class="toast-icon">
+      {{ currentToast.type === 'info' ? 'i' : '✔' }}
+    </span>
+    <span>{{ currentToast.message }}</span>
+  </div>
+}

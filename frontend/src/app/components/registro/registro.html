@@ -1,12 +1,4 @@
 <div class="login-wrapper centered-layout">
-
-  @if (successMessage()) {
-    <div class="toast-success" role="status" aria-live="polite">
-      <span class="toast-icon">✔</span>
-      <span>{{ successMessage() }}</span>
-    </div>
-  }
-
   <section class="form-panel">
     <div class="form-card registro-card">
 
@@ -21,7 +13,7 @@
       </header>
 
       @if (errorMessage()) {
-        <div class="alert-error">
+        <div class="alert-error" role="alert">
           {{ errorMessage() }}
         </div>
       }
@@ -39,7 +31,7 @@
               id="nombre"
               type="text"
               formControlName="nombre"
-              placeholder="Tu nombre"
+              placeholder="Nombre"
               autocomplete="given-name"
               [class.input-error]="registroForm.get('nombre')?.invalid && registroForm.get('nombre')?.touched"
             />
@@ -58,7 +50,7 @@
               id="apellido"
               type="text"
               formControlName="apellido"
-              placeholder="Tu apellido"
+              placeholder="Apellido"
               autocomplete="family-name"
               [class.input-error]="registroForm.get('apellido')?.invalid && registroForm.get('apellido')?.touched"
             />
@@ -79,7 +71,7 @@
               id="email"
               type="email"
               formControlName="email"
-              placeholder="ejemplo@correo.com"
+              placeholder="Correo electrónico"
               autocomplete="email"
               [class.input-error]="registroForm.get('email')?.invalid && registroForm.get('email')?.touched"
             />
@@ -87,7 +79,7 @@
             @if (registroForm.get('email')?.touched && registroForm.get('email')?.hasError('required')) {
               <span class="field-error">El correo es obligatorio.</span>
             }
-            @if (registroForm.get('email')?.touched && registroForm.get('email')?.hasError('email')) {
+            @if (registroForm.get('email')?.touched && (registroForm.get('email')?.hasError('email') || registroForm.get('email')?.hasError('pattern'))) {
               <span class="field-error">Ingresá un formato de correo válido.</span>
             }
           </div>
@@ -98,7 +90,7 @@
               id="username"
               type="text"
               formControlName="username"
-              placeholder="Tu nombre de usuario"
+              placeholder="Nombre de usuario"
               autocomplete="username"
               [class.input-error]="registroForm.get('username')?.invalid && registroForm.get('username')?.touched"
             />
@@ -149,14 +141,20 @@
               </button>
             </div>
 
-            @if (registroForm.get('password')?.touched && registroForm.get('password')?.hasError('required')) {
-              <span class="field-error">La contraseña es obligatoria.</span>
-            }
             @if (registroForm.get('password')?.touched && registroForm.get('password')?.hasError('pattern')) {
               <span class="field-error">
                 Mínimo 8 caracteres, una mayúscula y un número.
               </span>
+            } @else {
+              <span class="field-hint">
+                La contraseña debe contener mínimo 8 caracteres, una mayúscula y un número.
+              </span>
             }
+
+            @if (registroForm.get('password')?.touched && registroForm.get('password')?.hasError('required')) {
+              <span class="field-error">La contraseña es obligatoria.</span>
+            }
+            
           </div>
 
           <div class="form-group">
@@ -166,7 +164,7 @@
                 id="confirmPassword"
                 [type]="showConfirmPassword() ? 'text' : 'password'"
                 formControlName="confirmPassword"
-                placeholder="Repetí la contraseña"
+                placeholder="Repetir contraseña"
                 autocomplete="new-password"
                 [class.input-error]="(registroForm.get('confirmPassword')?.invalid || registroForm.hasError('passwordMismatch')) && registroForm.get('confirmPassword')?.touched"
               />
@@ -206,7 +204,6 @@
           <label id="birthDateLabel">Fecha de nacimiento</label>
 
           <div class="birthdate-grid" role="group" aria-labelledby="birthDateLabel">
-            <!-- Selector de Día -->
             <div class="select-wrapper">
               <select
                 aria-label="Día de nacimiento"
@@ -222,7 +219,6 @@
               </select>
             </div>
 
-            <!-- Selector de Mes -->
             <div class="select-wrapper">
               <select
                 aria-label="Mes de nacimiento"
@@ -238,7 +234,6 @@
               </select>
             </div>
 
-            <!-- Selector de Año -->
             <div class="select-wrapper">
               <select
                 aria-label="Año de nacimiento"
@@ -272,6 +267,7 @@
             [class.input-error]="registroForm.get('profileImage')?.invalid && registroForm.get('profileImage')?.touched"
           >
             <input
+              #profileImageInput
               id="profileImage"
               type="file"
               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -306,7 +302,7 @@
         </div>
 
         <div class="form-group">
-          <label for="description">Descripción breve</label>
+          <label for="description">Una descripción breve sobre vos.</label>
           <textarea
             id="description"
             formControlName="description"

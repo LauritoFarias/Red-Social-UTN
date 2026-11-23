@@ -1,16 +1,26 @@
-import { Component, OnInit, ElementRef, PLATFORM_ID, computed, effect, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ElementRef,
+  PLATFORM_ID,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { PostsService } from '../../services/posts';
 import { AuthService } from '../../services/auth';
 import { PostItem } from '../../models/post.model';
 import { PostCard } from '../../components/post-card/post-card';
+import { AppHeader } from '../../components/header/header';
 import { AvatarHoverDirective } from '../../directives/avatar-hover';
 
 @Component({
   selector: 'app-feed',
-  imports: [PostCard, ReactiveFormsModule, RouterLink, AvatarHoverDirective],
+  imports: [AppHeader, PostCard, ReactiveFormsModule, AvatarHoverDirective],
   templateUrl: './feed.html',
   styleUrl: './feed.scss',
 })
@@ -36,7 +46,6 @@ export class Feed implements OnInit {
   usuarioActual = computed(() => this.authService.currentUser());
   currentUserId = computed(() => this.authService.currentUserId());
   esAdmin = this.authService.isAdmin;
-  menuUsuarioAbierto = signal<boolean>(false);
 
   avatarUsuarioActual = computed(() => {
     const user = this.usuarioActual();
@@ -81,8 +90,19 @@ export class Feed implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
+      window.scrollTo({ top: 0 });
       this.cargaInicialCompleta();
     }
+  }
+
+  irAlInicioFeed(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    this.cargandoMas.set(false);
+    this.currentPage.set(1);
+    this.cargarPublicaciones();
   }
 
   private cargaInicialCompleta(): void {
@@ -184,24 +204,6 @@ export class Feed implements OnInit {
     this.sortBy.set(nuevoOrden);
     this.currentPage.set(1);
     this.cargarPublicaciones();
-  }
-
-  // ================= MENÚ DE USUARIO (HEADER) =================
-
-  toggleMenuUsuario(event: Event): void {
-    event.stopPropagation();
-    this.menuUsuarioAbierto.update((abierto) => !abierto);
-  }
-
-  cerrarMenuUsuario(): void {
-    if (this.menuUsuarioAbierto()) {
-      this.menuUsuarioAbierto.set(false);
-    }
-  }
-
-  cerrarSesion(): void {
-    this.menuUsuarioAbierto.set(false);
-    this.authService.logout();
   }
 
   // ================= MODAL DE NUEVA PUBLICACIÓN =================
