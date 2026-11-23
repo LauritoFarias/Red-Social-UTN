@@ -31,12 +31,12 @@ export const routes: Routes = [
       import('./components/post-detail/post-detail').then((m) => m.PostDetail),
   },
   {
-    path: 'perfil',
+    path: 'profile',
     canActivate: [authGuard],
     loadComponent: () => import('./components/profile/profile').then((m) => m.Profile),
   },
   {
-    path: 'perfil/:id',
+    path: 'profile/:id',
     canActivate: [authGuard],
     loadComponent: () => import('./components/profile/profile').then((m) => m.Profile),
   },
