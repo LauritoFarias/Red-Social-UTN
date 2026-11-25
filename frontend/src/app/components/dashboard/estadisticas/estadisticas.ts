@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import {
   EstadisticasService,
@@ -20,6 +21,7 @@ import {
   VisitasMiPerfilResponse,
   SeriePorDiaItem,
 } from '../../../services/estadisticas';
+import { LoadingService } from '../../../services/loading';
 
 Chart.register(...registerables);
 
@@ -39,6 +41,7 @@ type ChartKey =
 })
 export class Estadisticas implements AfterViewInit, OnDestroy {
   private estadisticasService = inject(EstadisticasService);
+  private loadingService = inject(LoadingService);
   private platformId = inject(PLATFORM_ID);
 
   // Referencias a los 6 canvas
@@ -116,75 +119,85 @@ export class Estadisticas implements AfterViewInit, OnDestroy {
     });
   }
 
+  private conSpinner<T>(obs$: Observable<T>, global: boolean): Observable<T> {
+    return global ? this.loadingService.track(obs$) : obs$;
+  }
+
   cargarTodasLasEstadisticas(): void {
     this.error.set('');
-    this.cargarPublicacionesPorUsuario();
-    this.cargarComentariosPorTiempo();
-    this.cargarComentariosPorPublicacion();
-    this.cargarIngresosPorUsuario();
-    this.cargarVisitasMiPerfil();
-    this.cargarLikesPorDia();
+    this.cargarPublicacionesPorUsuario(true);
+    this.cargarComentariosPorTiempo(true);
+    this.cargarComentariosPorPublicacion(true);
+    this.cargarIngresosPorUsuario(true);
+    this.cargarVisitasMiPerfil(true);
+    this.cargarLikesPorDia(true);
   }
 
   // 1. Publicaciones por usuario en un lapso de tiempo
-  cargarPublicacionesPorUsuario(): void {
+  cargarPublicacionesPorUsuario(global = false): void {
     this.cargandoPubUsuario.set(true);
-    this.estadisticasService
-      .getPublicacionesPorUsuario(this.pubDesde(), this.pubHasta())
-      .subscribe({
-        next: (data) => {
-          this.cargandoPubUsuario.set(false);
-          this.vacioPubUsuario.set(data.length === 0);
-          this.renderPublicacionesPorUsuario(data);
-        },
-        error: () => {
-          this.cargandoPubUsuario.set(false);
-          this.error.set('No se pudieron cargar algunas estadísticas.');
-        },
-      });
+    this.conSpinner(
+      this.estadisticasService.getPublicacionesPorUsuario(this.pubDesde(), this.pubHasta()),
+      global,
+    ).subscribe({
+      next: (data) => {
+        this.cargandoPubUsuario.set(false);
+        this.vacioPubUsuario.set(data.length === 0);
+        this.renderPublicacionesPorUsuario(data);
+      },
+      error: () => {
+        this.cargandoPubUsuario.set(false);
+        this.error.set('No se pudieron cargar algunas estadísticas.');
+      },
+    });
   }
 
   // 2. Comentarios realizados en un lapso de tiempo
-  cargarComentariosPorTiempo(): void {
+  cargarComentariosPorTiempo(global = false): void {
     this.cargandoComTiempo.set(true);
-    this.estadisticasService
-      .getComentariosPorTiempo(this.comDesde(), this.comHasta())
-      .subscribe({
-        next: (res) => {
-          this.cargandoComTiempo.set(false);
-          this.totalComentarios.set(res.total);
-          this.vacioComTiempo.set(res.datos.length === 0);
-          this.renderComentariosPorTiempo(res);
-        },
-        error: () => {
-          this.cargandoComTiempo.set(false);
-          this.error.set('No se pudieron cargar algunas estadísticas.');
-        },
-      });
+    this.conSpinner(
+      this.estadisticasService.getComentariosPorTiempo(this.comDesde(), this.comHasta()),
+      global,
+    ).subscribe({
+      next: (res) => {
+        this.cargandoComTiempo.set(false);
+        this.totalComentarios.set(res.total);
+        this.vacioComTiempo.set(res.datos.length === 0);
+        this.renderComentariosPorTiempo(res);
+      },
+      error: () => {
+        this.cargandoComTiempo.set(false);
+        this.error.set('No se pudieron cargar algunas estadísticas.');
+      },
+    });
   }
 
   // 3. Comentarios por publicación en un lapso de tiempo
-  cargarComentariosPorPublicacion(): void {
+  cargarComentariosPorPublicacion(global = false): void {
     this.cargandoComPost.set(true);
-    this.estadisticasService
-      .getComentariosPorPublicacion(this.comPostDesde(), this.comPostHasta())
-      .subscribe({
-        next: (data) => {
-          this.cargandoComPost.set(false);
-          this.vacioComPost.set(data.length === 0);
-          this.renderComentariosPorPublicacion(data);
-        },
-        error: () => {
-          this.cargandoComPost.set(false);
-          this.error.set('No se pudieron cargar algunas estadísticas.');
-        },
-      });
+    this.conSpinner(
+      this.estadisticasService.getComentariosPorPublicacion(
+        this.comPostDesde(),
+        this.comPostHasta(),
+      ),
+      global,
+    ).subscribe({
+      next: (data) => {
+        this.cargandoComPost.set(false);
+        this.vacioComPost.set(data.length === 0);
+        this.renderComentariosPorPublicacion(data);
+      },
+      error: () => {
+        this.cargandoComPost.set(false);
+        this.error.set('No se pudieron cargar algunas estadísticas.');
+      },
+    });
   }
 
   // 4. Ingresos (log in) por usuario
-  cargarIngresosPorUsuario(): void {
+  cargarIngresosPorUsuario(global = false): void {
     this.cargandoIngresos.set(true);
-    this.estadisticasService.getIngresosPorUsuario().subscribe({
+    this.conSpinner(this.estadisticasService.getIngresosPorUsuario(), global).subscribe({
       next: (data) => {
         this.cargandoIngresos.set(false);
         this.vacioIngresos.set(data.length === 0);
@@ -198,9 +211,9 @@ export class Estadisticas implements AfterViewInit, OnDestroy {
   }
 
   // 5. Visitas a mi perfil (por terceros)
-  cargarVisitasMiPerfil(): void {
+  cargarVisitasMiPerfil(global = false): void {
     this.cargandoVisitas.set(true);
-    this.estadisticasService.getVisitasMiPerfil().subscribe({
+    this.conSpinner(this.estadisticasService.getVisitasMiPerfil(), global).subscribe({
       next: (res) => {
         this.cargandoVisitas.set(false);
         this.totalVisitasPerfil.set(res.total);
@@ -215,9 +228,9 @@ export class Estadisticas implements AfterViewInit, OnDestroy {
   }
 
   // 6. Me gusta otorgados por día
-  cargarLikesPorDia(): void {
+  cargarLikesPorDia(global = false): void {
     this.cargandoLikes.set(true);
-    this.estadisticasService.getLikesPorDia().subscribe({
+    this.conSpinner(this.estadisticasService.getLikesPorDia(), global).subscribe({
       next: (data) => {
         this.cargandoLikes.set(false);
         this.vacioLikes.set(data.length === 0);

@@ -3,7 +3,7 @@
   <header class="post-header">
     <div class="autor-info">
       <a
-        [routerLink]="['/perfil', post().autor._id]"
+        [routerLink]="['/profile', post().autor._id]"
         class="autor-avatar-link"
         [title]="'Ver perfil de ' + post().autor.username">
         <img
@@ -16,7 +16,7 @@
       <div class="autor-meta">
         <div class="autor-names">
           <a
-            [routerLink]="['/perfil', post().autor._id]"
+            [routerLink]="['/profile', post().autor._id]"
             class="username autor-link"
             [title]="'Ver perfil de ' + post().autor.username">
             {{ post().autor.username }}
@@ -119,7 +119,7 @@
         @for (comentario of comentarios(); track comentario._id) {
           <div class="comment-item">
             <a
-              [routerLink]="['/perfil', comentario.autor._id]"
+              [routerLink]="['/profile', comentario.autor._id]"
               class="autor-avatar-link"
               [title]="'Ver perfil de ' + comentario.autor.username">
               <img
@@ -133,7 +133,7 @@
               <div class="comment-header">
                 <div class="comment-author-meta">
                   <a
-                    [routerLink]="['/perfil', comentario.autor._id]"
+                    [routerLink]="['/profile', comentario.autor._id]"
                     class="comment-username autor-link">
                     {{ comentario.autor.username }}
                   </a>

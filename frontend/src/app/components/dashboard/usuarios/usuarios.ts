@@ -1,8 +1,9 @@
 import { Component, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
 import { DatePipe, TitleCasePipe, isPlatformBrowser } from '@angular/common';
-import { EstadoUsuarioPipe } from '../../../pipes/estado-usuario-pipe';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { EstadoUsuarioPipe } from '../../../pipes/estado-usuario-pipe';
 import { AuthService } from '../../../services/auth';
+import { LoadingService } from '../../../services/loading';
 import { Registro } from '../../registro/registro';
 import { environment } from '../../../../environments/environment';
 import { EstadoUsuarioDirective } from '../../../directives/estado-usuario';
@@ -30,6 +31,7 @@ export interface UsuarioDashboard {
 export class DashboardUsuarios implements OnInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
+  private loadingService = inject(LoadingService);
   private platformId = inject(PLATFORM_ID);
   private apiUrl = `${environment.apiUrl}/usuarios`;
 
@@ -60,19 +62,21 @@ export class DashboardUsuarios implements OnInit {
     this.cargando.set(true);
     this.error.set('');
 
-    this.http
-      .get<UsuarioDashboard[]>(this.apiUrl, { headers: this.getAuthHeaders() })
-      .subscribe({
-        next: (lista) => {
-          this.usuarios.set(lista);
-          this.cargando.set(false);
-        },
-        error: (err) => {
-          console.error('Error al cargar usuarios:', err);
-          this.error.set(err?.error?.message || 'No se pudo cargar el listado de usuarios.');
-          this.cargando.set(false);
-        },
-      });
+    const request$ = this.http.get<UsuarioDashboard[]>(this.apiUrl, {
+      headers: this.getAuthHeaders(),
+    });
+
+    this.loadingService.track(request$).subscribe({
+      next: (lista) => {
+        this.usuarios.set(lista);
+        this.cargando.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar usuarios:', err);
+        this.error.set(err?.error?.message || 'No se pudo cargar el listado de usuarios.');
+        this.cargando.set(false);
+      },
+    });
   }
 
   toggleEstadoUsuario(usuario: UsuarioDashboard): void {

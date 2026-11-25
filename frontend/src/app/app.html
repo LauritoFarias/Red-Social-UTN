@@ -1,5 +1,9 @@
 <router-outlet />
 
+@if (loadingService.isLoading()) {
+  <app-loading />
+}
+
 @if (authService.mostrarModalExpiracion()) {
   <div class="session-modal-backdrop">
     <div class="session-modal-card" role="dialog" aria-modal="true">

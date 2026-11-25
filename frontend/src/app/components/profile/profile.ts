@@ -10,11 +10,12 @@ import {
 } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
+import { Subscription, forkJoin, from, switchMap } from 'rxjs';
 import { AuthService, UsuarioSesion } from '../../services/auth';
 import { PostsService } from '../../services/posts';
 import { EstadisticasService } from '../../services/estadisticas';
 import { ToastService } from '../../services/toast';
+import { LoadingService } from '../../services/loading';
 import { PostItem } from '../../models/post.model';
 import { AppHeader } from '../header/header';
 import { PostCard } from '../post-card/post-card';
@@ -78,6 +79,7 @@ export class Profile implements OnInit, OnDestroy {
   private postsService = inject(PostsService);
   private estadisticasService = inject(EstadisticasService);
   private toastService = inject(ToastService);
+  private loadingService = inject(LoadingService);
   private platformId = inject(PLATFORM_ID);
 
   private routeSub?: Subscription;
@@ -222,7 +224,6 @@ export class Profile implements OnInit, OnDestroy {
   private cargarDatosPerfil(): void {
     this.paginaLista.set(false);
     this.errorPerfil.set('');
-    const inicio = Date.now();
     const targetId = this.perfilIdActivo();
 
     if (!targetId) {
@@ -233,21 +234,22 @@ export class Profile implements OnInit, OnDestroy {
     if (this.esPerfilPropio()) {
       this.usuarioVisitado.set(null);
 
-      this.postsService.getPostsByUser(targetId, 3).subscribe({
-        next: async (res) => {
+      const cargaPropia$ = this.postsService.getPostsByUser(targetId, 3).pipe(
+        switchMap((res) => {
           this.ultimosPosts.set(res.data);
           this.totalPublicaciones.set(res.meta.total);
 
           const urlsAPrecargar = [
             this.resolverAvatar(this.usuarioActual()),
             ...res.data.map((p) => p.imagenUrl || ''),
-          ].filter((url) => !!url);
+          ].filter(Boolean);
 
-          await this.precargarImagenes(urlsAPrecargar);
+          return from(this.precargarImagenes(urlsAPrecargar));
+        }),
+      );
 
-          const restante = Math.max(0, 500 - (Date.now() - inicio));
-          setTimeout(() => this.paginaLista.set(true), restante);
-        },
+      this.loadingService.track(cargaPropia$).subscribe({
+        next: () => this.paginaLista.set(true),
         error: (err) => {
           console.error('Error al cargar las publicaciones del perfil:', err);
           this.paginaLista.set(true);
@@ -257,11 +259,11 @@ export class Profile implements OnInit, OnDestroy {
     }
 
     // Perfil de un tercero: trae datos públicos + registra la visita en el backend
-    forkJoin({
+    const cargaTercero$ = forkJoin({
       perfil: this.estadisticasService.getPerfilUsuario(targetId),
       posts: this.postsService.getPostsByUser(targetId, 3),
-    }).subscribe({
-      next: async ({ perfil, posts }) => {
+    }).pipe(
+      switchMap(({ perfil, posts }) => {
         this.usuarioVisitado.set(perfil.usuario);
         this.ultimosPosts.set(posts.data);
         this.totalPublicaciones.set(posts.meta.total);
@@ -270,13 +272,14 @@ export class Profile implements OnInit, OnDestroy {
           this.resolverAvatar(this.usuarioActual()),
           this.resolverAvatar(perfil.usuario),
           ...posts.data.map((p) => p.imagenUrl || ''),
-        ].filter((url) => !!url);
+        ].filter(Boolean);
 
-        await this.precargarImagenes(urlsAPrecargar);
+        return from(this.precargarImagenes(urlsAPrecargar));
+      }),
+    );
 
-        const restante = Math.max(0, 500 - (Date.now() - inicio));
-        setTimeout(() => this.paginaLista.set(true), restante);
-      },
+    this.loadingService.track(cargaTercero$).subscribe({
+      next: () => this.paginaLista.set(true),
       error: (err: HttpErrorResponse) => {
         console.error('Error al cargar el perfil visitado:', err);
         this.usuarioVisitado.set(null);

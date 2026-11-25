@@ -8,7 +8,7 @@
     <div class="header-inner">
       <a routerLink="/feed" class="brand-link">
         <span class="brand-dot"></span>
-        <span class="brand-title">Retro Vibes</span>
+        <span class="brand-title">Portal Retro</span>
       </a>
 
       <div class="header-actions">
@@ -31,7 +31,7 @@
                 <span>&#64;{{ usuarioActual()?.username }}</span>
               </div>
               <hr />
-              <a routerLink="/perfil" class="dropdown-item" (click)="cerrarMenuUsuario()">
+              <a routerLink="/profile" class="dropdown-item" (click)="cerrarMenuUsuario()">
                 Ver perfil
               </a>
               <button type="button" class="dropdown-item dropdown-logout" (click)="cerrarSesion()">

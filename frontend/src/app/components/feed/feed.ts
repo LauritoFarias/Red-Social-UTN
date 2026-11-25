@@ -11,8 +11,10 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { from, switchMap } from 'rxjs';
 import { PostsService } from '../../services/posts';
 import { AuthService } from '../../services/auth';
+import { LoadingService } from '../../services/loading';
 import { PostItem } from '../../models/post.model';
 import { PostCard } from '../../components/post-card/post-card';
 import { AppHeader } from '../../components/header/header';
@@ -27,6 +29,7 @@ import { AvatarHoverDirective } from '../../directives/avatar-hover';
 export class Feed implements OnInit {
   private postsService = inject(PostsService);
   private authService = inject(AuthService);
+  private loadingService = inject(LoadingService);
   private fb = inject(FormBuilder);
   private platformId = inject(PLATFORM_ID);
 
@@ -107,24 +110,26 @@ export class Feed implements OnInit {
 
   private cargaInicialCompleta(): void {
     this.paginaLista.set(false);
-    const inicio = Date.now();
 
-    this.postsService.getPosts(this.sortBy(), this.currentPage(), this.limit()).subscribe({
-      next: async (res) => {
-        this.posts.set(res.data);
-        this.totalPages.set(res.meta.totalPages || 1);
+    const carga$ = this.postsService
+      .getPosts(this.sortBy(), this.currentPage(), this.limit())
+      .pipe(
+        switchMap((res) => {
+          this.posts.set(res.data);
+          this.totalPages.set(res.meta.totalPages || 1);
 
-        const urlsAPrecargar: string[] = [
-          this.avatarUsuarioActual(),
-          ...res.data.map((p) => p.autor?.imagenUrl || p.autor?.fotoPerfil || ''),
-          ...res.data.map((p) => p.imagenUrl || ''),
-        ].filter((url) => !!url);
+          const urlsAPrecargar: string[] = [
+            this.avatarUsuarioActual(),
+            ...res.data.map((p) => p.autor?.imagenUrl || p.autor?.fotoPerfil || ''),
+            ...res.data.map((p) => p.imagenUrl || ''),
+          ].filter(Boolean);
 
-        await this.precargarImagenes(urlsAPrecargar);
+          return from(this.precargarImagenes(urlsAPrecargar));
+        }),
+      );
 
-        const restante = Math.max(0, 800 - (Date.now() - inicio));
-        setTimeout(() => this.paginaLista.set(true), restante);
-      },
+    this.loadingService.track(carga$).subscribe({
+      next: () => this.paginaLista.set(true),
       error: (err) => {
         console.error('Error al cargar publicaciones:', err);
         this.paginaLista.set(true);

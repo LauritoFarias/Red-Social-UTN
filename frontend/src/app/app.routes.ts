@@ -6,7 +6,7 @@ import { adminGuard } from '../app/guards/admin-guard';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./components/loading/loading').then((m) => m.Loading),
+    redirectTo: 'login',
     pathMatch: 'full',
   },
   {

@@ -1,9 +1,4 @@
-@if (!paginaLista()) {
-  <!-- SPINNER A PANTALLA COMPLETA MIENTRAS SE PRE-CARGA TODO EL FEED E IMÁGENES -->
-  <div class="feed-initial-loader" role="status" aria-label="Cargando">
-    <div class="retro-spinner"></div>
-  </div>
-} @else {
+@if (paginaLista()) {
   <!-- HEADER STICKY COMPARTIDO -->
   <app-header
     [mostrarPublicar]="true"

@@ -72,7 +72,7 @@ export class EstadisticasService {
 
   getPerfilUsuario(usuarioId: string): Observable<{ usuario: UsuarioSesion }> {
     return this.http.get<{ usuario: UsuarioSesion }>(
-      `${this.apiUrl}/perfil/${usuarioId}`,
+      `${this.apiUrl}/profile/${usuarioId}`,
       { headers: this.getAuthHeaders() },
     );
   }
